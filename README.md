@@ -7,7 +7,7 @@ level 2 version 2 model (except those with event rules). SbmlCompiler
 analyzes evaluation dependencies of the SBML model and generates minimally a
 function <code>FFCN</code> of differential equations and <code>GFCN</code> of algebraic equations in
 FORTRAN with decorated symbols. SbmlCompiler can be instructed to also generate
-a <code>PLOT</code> function or measurement functions <code>MFCN</code> for parameter estimation problems.
+a <code>PLOT</code> function, or measurement functions <code>MFCN</code> for parameter estimation problems.
 
 Elements of the dependency graph can be replaced programmatically to manipulate
 the model in accordance with experimental setups. For example, a <code>DiffStateCoder</code>
