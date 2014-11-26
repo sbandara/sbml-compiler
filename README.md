@@ -17,15 +17,18 @@ can be replaced by a <code>ControlCoder</code> object if the ligand concentratio
 dosed experimentally. This makes SbmlCompiler useful for supporting parameter
 estimation campaigns from cell based or in vitro assays. Any FORTRAN code
 produced SbmlCompiler is suitable for automatic differentiation by
-<a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>.
+<a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>. The ability to directly compute
+derivatives with respect to parameters or control inputs can be exploited in applications of
+parameter estimation or for identifying solutions of control problems such as
+optimal experimental design.
 
 <h3>Validation</h3>
 SbmlCompiler has been validated against all 17 models of the initial release of
 the <a href="http://www.ebi.ac.uk/biomodels/">BioModels</a> database.
 
 <h3>Acknowledgements</h3>
-I thank my internship mentors Ivayla Vacheva and Roland Eils at the German
-Cancer Research Center (dkfz.) and Johannes Schlöder, Stefan Körkel, and Hans Georg Bock
-at the Interdisciplinary Center for Scientific Computing (IWR). I developed this
-package as part of the project "Computational platform for modeling of signal transduction"
-funded by Microsoft Research.
+I thank my mentors Ivayla Vacheva and Roland Eils at the German Cancer Research Center
+(dkfz.) and Johannes Schlöder, Stefan Körkel, and Hans Georg Bock at the Interdisciplinary
+Center for Scientific Computing (IWR). I developed this package while participating in the
+project "Computational platform for modeling of signal transduction", which was funded by
+Microsoft Research.
