@@ -1,13 +1,13 @@
 <h2>SbmlCompiler</h2>
 
 <h3>Overview</h3>
-This Java package can generate <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-compliant
+This Java package generates <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-compliant
 DAE code in FORTRAN from any <a href="http://www.sbml.org/">SBML</a> level 2 version 2 model
 (except those with event rules). SbmlCompiler analyzes evaluation dependencies of the SBML
 model and generates minimally a function <code>FFCN</code> of differential equations and
-<code>GFCN</code> of algebraic equations in FORTRAN with decorated symbols. SbmlCompiler can
-be instructed to also generate a <code>PLOT</code> function, or measurement functions
-<code>MFCN</code> for parameter estimation problems.
+<code>GFCN</code> of algebraic equations in FORTRAN with decorated symbols for linkage into
+numerical optimization software. SbmlCompiler can be instructed to also generate a
+<code>PLOT</code> function, or measurement functions <code>MFCN</code>.
 
 <h3>Notable Features</h3>
 Elements of the dependency graph can be replaced programmatically to manipulate the model in
@@ -18,7 +18,7 @@ experimentally. This makes SbmlCompiler useful for supporting parameter estimati
 from cell based or in vitro assays. Any FORTRAN code produced SbmlCompiler is suitable for
 automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>. The ability
 to directly compute derivatives with respect to parameters or control inputs can be exploited
-in applications of parameter estimation or for identifying solutions of control problems such
+in applications of parameter estimation or for identifying solutions to control problems such
 as optimal experimental design.
 
 <h3>Validation</h3>
