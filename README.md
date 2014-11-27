@@ -1,7 +1,7 @@
 <h2>de.dkfz.tbi.sbmlcompiler</h2>
 
 <h3>Overview</h3>
-This Java package generates <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-compliant
+This Java package generates <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-processable
 DAE code in FORTRAN from any <a href="http://www.sbml.org/">SBML</a> level 2 version 2 model
 (except those with event rules). SbmlCompiler analyzes evaluation dependencies of the SBML
 model and generates minimally a function <code>FFCN</code> of differential equations and
