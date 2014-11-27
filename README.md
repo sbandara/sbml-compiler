@@ -1,4 +1,4 @@
-<h2>SbmlCompiler</h2>
+<h2>de.dkfz.tbi.sbmlcompiler</h2>
 
 <h3>Overview</h3>
 This Java package generates <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-compliant
