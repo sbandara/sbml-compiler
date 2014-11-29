@@ -16,10 +16,7 @@ ligand concentration in the bindings returned by <code>getInVivoBindings()</code
 replaced by a <code>ControlCoder</code> object if the ligand concentration can be dosed
 experimentally. This makes SbmlCompiler useful for supporting parameter estimation campaigns
 from cell-based or <i>in vitro</i> assays. Any FORTRAN code produced SbmlCompiler is suitable for
-automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>. The ability
-to directly compute derivatives with respect to parameters or control inputs can be exploited
-in applications of parameter estimation or for identifying solutions to control problems such
-as optimal experimental design.
+automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>.
 
 <h3>Validation</h3>
 SbmlCompiler has been validated against all 17 models of the initial release of the
