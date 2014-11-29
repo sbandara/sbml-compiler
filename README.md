@@ -20,7 +20,8 @@ automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>.
 
 <h3>Validation</h3>
 SbmlCompiler has been validated against all 17 models of the initial release of the
-<a href="http://www.ebi.ac.uk/biomodels/">BioModels</a> database.
+<a href="http://www.ebi.ac.uk/biomodels/">BioModels</a> database. Concentration trajectories
+of each model were compared to the results of the respective group of authors.
 
 <h3>Acknowledgements</h3>
 I thank my mentors Ivayla Vacheva and Roland Eils at the German Cancer Research Center
