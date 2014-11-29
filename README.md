@@ -1,12 +1,11 @@
 <h2>de.dkfz.tbi.sbmlcompiler</h2>
 
 <h3>Overview</h3>
-This Java package generates <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>-processable
-DAE code in FORTRAN from any <a href="http://www.sbml.org/">SBML</a> level 2 version 2 model
-(except those with event rules). SbmlCompiler analyzes evaluation dependencies of the SBML
-model and generates minimally a function <code>FFCN</code> of differential equations and
-<code>GFCN</code> of algebraic equations in FORTRAN with decorated symbols for linkage into
-numerical optimization software. SbmlCompiler can be instructed to also generate a
+This Java package generates DAE code in FORTRAN from any <a href="http://www.sbml.org/">SBML</a>
+level 2 version 2 model (except those with event rules). SbmlCompiler analyzes evaluation
+dependencies of the SBML model and generates minimally a function <code>FFCN</code> of differential
+equations and <code>GFCN</code> of algebraic equations in FORTRAN with decorated symbols for
+linkage into numerical optimization software. SbmlCompiler can be instructed to also generate a
 <code>PLOT</code> function, or measurement functions <code>MFCN</code>.
 
 <h3>Notable Features</h3>
@@ -16,7 +15,8 @@ ligand concentration in the bindings returned by <code>getInVivoBindings()</code
 replaced by a <code>ControlCoder</code> object if the ligand concentration can be dosed
 experimentally. This makes SbmlCompiler useful for supporting parameter estimation campaigns
 from cell-based or <i>in vitro</i> assays. Any FORTRAN code produced SbmlCompiler is suitable for
-automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>.
+automatic differentiation by <a href="http://www.mcs.anl.gov/adifor">ADIFOR</a>, a feature that
+can be exploited by certain applications of numerical optimization.
 
 <h3>Validation</h3>
 SbmlCompiler has been validated against all 17 models of the initial release of the
