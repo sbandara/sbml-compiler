@@ -27,4 +27,5 @@ of each model were compared to the results of the respective group of authors.
 I thank my mentors Ivayla Vacheva and Roland Eils at the German Cancer Research Center
 (dkfz.) and Johannes Schlöder, Stefan Körkel, and Hans Georg Bock at the Interdisciplinary
 Center for Scientific Computing (IWR). I developed this package as part of a "Computational
-platform for modeling of signal transduction", for which Microsoft Research provided funding.
+platform for modeling of signal transduction", for which Microsoft Research had provided
+funding.
