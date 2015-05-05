@@ -62,8 +62,6 @@ final public class SbmlCompiler {
      */
     private SBMLDocument document;
 
-    private String sbmlString;
-    
     /**
      * Map from species to the reactions the species is involved in.
      */
@@ -109,19 +107,16 @@ final public class SbmlCompiler {
     	reader = new SBMLReader();
     	if (fromString) {
     		document = reader.readSBMLFromString(sbml);
-    		this.sbmlString = sbml;
     	}
-    	else {//from file
+    	else {
     		document = reader.readSBML(sbml);
-    		this.sbmlString = document.toSBML();
     	}
 		try {
 			model = document.getModel();
-			// if (model == null) throw new Exception();
     	}
     	catch (Exception e) {
     		throw new SbmlCompilerException(SbmlCompilerException
-    				.CANNOT_READ_SBML, sbmlString);
+    				.CANNOT_READ_SBML, e);
     	}
     	
     	/* Walks the list of rules. Algebraic rules are stored in an ArrayList
@@ -357,7 +352,7 @@ final public class SbmlCompiler {
     		}
     	}
     }
-        
+    
     private int n_visit_flags = 0;
     
     int getVisitFlagCount() {
@@ -429,8 +424,7 @@ final public class SbmlCompiler {
 	 * Contains the prefixes as keys and <code>Integers</code> for counting
 	 * as values.
 	 */
-	private HashMap<String, Integer> sequence = new HashMap<String,
-			Integer>();
+	private HashMap<String, Integer> sequence = new HashMap<String, Integer>();
 
 	/**
 	 * Increments the counter for the given <code>prefix</code> if it
@@ -469,12 +463,9 @@ final public class SbmlCompiler {
     	return idFromNameMap.get(name);
     }
     
-	public String getSbmlString() {
-		return sbmlString;
-	}
-	
+	/*
 	private static final String usageText = "usage: sbmlcompiler SBMLFILE.XML";
-	
+
 	public static void main(String[] args) {
 		if (args.length != 1) {
 			System.out.println(usageText);
@@ -492,4 +483,5 @@ final public class SbmlCompiler {
 			System.out.println(e.getMessage());
 		}
 	}
+	*/
 }
