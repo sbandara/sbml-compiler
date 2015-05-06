@@ -10,37 +10,56 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
+
+import de.dkfz.tbi.sbmlcompiler.SbmlCompilerException;
 
 public class ModelParser {
 	
 	private final XMLReader xml_reader;
+	private String id = null, name = null;
 	
-	private class ModelHandler extends DefaultHandler {
+	private class ModelHandler extends StackedHandler {
 		
-		private int sbml_nested = -1;
+		ModelHandler(XMLReader reader) {
+			super(reader);
+		}
+		
+		int level = -1, version = -1;
 		
 		@Override
-		public void startElement(String uri, String local, String prefixed,
-				Attributes atts) throws SAXException {
-			if (sbml_nested > -1) {
-				sbml_nested ++;
+		public void startElement(String tag, Attributes atts)
+				throws SAXException {
+			int nested = getNested();
+			if ((nested == 1) && ("sbml".equalsIgnoreCase(tag))) {
+				for (int k = 0; k < atts.getLength(); k ++) {
+					if (atts.getLocalName(k).equalsIgnoreCase("version")) {
+						version = Integer.parseInt(atts.getValue(k));
+					}
+					else if (atts.getLocalName(k).equalsIgnoreCase("level")) {
+						level = Integer.parseInt(atts.getValue(k));
+					}
+				}
+				if ((level > 2) || (version > 2)) {
+					throw new SAXException("SBML version not supported",
+							new SbmlCompilerException(SbmlCompilerException
+									.CANNOT_READ_SBML, null));
+				}
 			}
-			else if ("sbml".equalsIgnoreCase(local)) {
-				sbml_nested = 0;
-			}
-			if (("model".equalsIgnoreCase(local)) && (sbml_nested == 1)) {
-				// TODO: wire in model handler
+			if ((nested == 2) && ("model".equalsIgnoreCase(tag))) {
+				for (int k = 0; k < atts.getLength(); k ++) {
+					if (atts.getLocalName(k).equalsIgnoreCase("name")) {
+						name = atts.getValue(k);
+					}
+					else if (atts.getLocalName(k).equalsIgnoreCase("id")) {
+						id = atts.getValue(k);
+					}
+				}
 			}
 		}
 		
 		@Override
-		public void endElement(String uri, String local, String prefixed)
-				throws SAXException {
-			if (sbml_nested > -1) {
-				sbml_nested --;
-			}
+		public void endElement(String tag) throws SAXException {
 		}
 	}
 	
@@ -53,8 +72,12 @@ public class ModelParser {
 		}
 	}
 	
+	public String getId() { return id; }
+	
+	public String getName() { return name; }
+	
 	private void parse(InputSource source) throws IOException, SAXException {
-		xml_reader.setContentHandler(new ModelHandler());
+		xml_reader.setContentHandler(new ModelHandler(xml_reader));
 		xml_reader.parse(source);
 	}
 	
