@@ -9,9 +9,9 @@ public class Compartment extends SbmlBase {
 	
 	int spatial_dimensions = 3;
 	Double size = null;
-	String units = null, out_key = null;
+	String units = null, outside_key = null;
 	Compartment outside;
-	boolean is_constant = true;
+	final boolean is_constant;
 	final Model model;
 	
 	Compartment(Model model, Attributes atts) throws SAXException {
@@ -21,16 +21,10 @@ public class Compartment extends SbmlBase {
 		if (str_dim != null) {
 			spatial_dimensions = Integer.parseInt(str_dim);
 		}
-		String str_size = atts.getValue("size");
-		if (str_size != null) {
-			size = Double.valueOf(str_size);
-		}
+		size = getDoubleAttOpt(atts, "size");
 		units = atts.getValue("units");
-		out_key = atts.getValue("outside");
-		String str_constant = atts.getValue("constant");
-		if (str_constant != null) {
-			is_constant = Boolean.parseBoolean(str_constant);
-		}
+		outside_key = atts.getValue("outside");
+		is_constant = getBoolAttOpt(atts, "constant", true);
 	}
 	
 	public int getSpatialDimentsions() { return spatial_dimensions; }
@@ -40,11 +34,11 @@ public class Compartment extends SbmlBase {
 	public String getUnits() { return units; }
 	
 	public Compartment getOutside() throws SbmlCompilerException {
-		if ((outside == null) && (out_key != null)) {
-			outside = model.getCompartment(out_key);
+		if ((outside == null) && (outside_key != null)) {
+			outside = (Compartment) model.getEntity(outside_key);
 			if (outside == null) {
 				throw new SbmlCompilerException(SbmlCompilerException
-						.UNKNOWN_MODEL_ENTITY, out_key);
+						.UNKNOWN_MODEL_ENTITY, outside_key);
 			}
 		}
 		return outside;

@@ -40,29 +40,16 @@ public class ModelParser {
 							new SbmlCompilerException(SbmlCompilerException
 									.CANNOT_READ_SBML, null));
 				}
-				if ((level != 2) || (version > 2)) {
+				if ((level != 2) || (version > 1)) {
 					throw new SAXException("SBML version not supported",
 							new SbmlCompilerException(SbmlCompilerException
 									.CANNOT_READ_SBML, null));
 				}
 			}
-			else if ((nested == 2) && ("model".equalsIgnoreCase(tag))) {				
-				getContext().setModel(new Model(atts));
-			}
-			else if (nested == 3) {
-				switch (tag) {
-				case "listOfCompartments":
-					context.push(new CompartmentReader(context));
-					break;
-				case "listOfSpecies":
-					break;
-				case "listOfParameters":
-					break;
-				case "listOfRules":
-					break;
-				case "listOfReactions":
-					break;
-				}
+			else if ((nested == 2) && ("model".equalsIgnoreCase(tag))) {	
+				Context context = getContext();
+				context.setModel(new Model(atts));
+				context.push(new EntityReader(context));
 			}
 		}
 		
@@ -87,14 +74,16 @@ public class ModelParser {
 	
 	public String getName() { return name; }
 	
-	public void parse(File sbml) throws IOException, SAXException {
+	public Model parse(File sbml) throws IOException, SAXException {
 		InputStream is = new FileInputStream(sbml);
-		xml_reader.setContentHandler(new SbmlHandler(xml_reader));
+		StackedHandler handler = new SbmlHandler(xml_reader);
+		xml_reader.setContentHandler(handler);
 		try {
 			xml_reader.parse(new InputSource(is));
 		}
 		finally {
 			is.close();
 		}
+		return handler.getContext().getModel();
 	}
 }

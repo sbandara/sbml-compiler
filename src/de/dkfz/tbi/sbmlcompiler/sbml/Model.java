@@ -7,18 +7,17 @@ import org.xml.sax.SAXException;
 
 public class Model extends SbmlBase {
 	
-	final HashMap<String, Compartment> compartments = new HashMap<String,
-			Compartment>();
+	final HashMap<String, SbmlBase> entities = new HashMap<String, SbmlBase>();
 	
 	Model(Attributes atts) throws SAXException {
 		super(atts);
 	}
 	
-	void addCompartment(Compartment compartment) {
-		compartments.put(compartment.getId(), compartment);
+	void addEntity(SbmlBase entity) {
+		entities.put(entity.getId(), entity);
 	}
 	
-	public Compartment getCompartment(String id) {
-		return compartments.get(id);
+	public SbmlBase getEntity(String id) {
+		return entities.get(id);
 	}
 }

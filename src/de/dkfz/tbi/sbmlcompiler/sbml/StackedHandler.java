@@ -39,7 +39,7 @@ abstract class StackedHandler extends DefaultHandler {
 	}
 	
 	private int nested = 0;
-	final Context context;
+	private final Context context;
 		
 	StackedHandler(Context context) {
 		this.context = context;
