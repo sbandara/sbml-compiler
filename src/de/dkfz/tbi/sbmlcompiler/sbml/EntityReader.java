@@ -19,11 +19,14 @@ class EntityReader extends StackedHandler {
 		}
 		else if (nested == 2) {
 			Model model = getContext().getModel();
-			if (tag.equalsIgnoreCase("compartment")) {
-				model.addCompartment(new Compartment(model, atts));
+			if (tag.equalsIgnoreCase("Compartment")) {
+				model.addEntity(new Compartment(model, atts));
 			}
 			else if (tag.equalsIgnoreCase("Species")) {
-				model.addSpecies(new Species(model, atts));
+				model.addEntity(new Species(model, atts));
+			}
+			else if (tag.equalsIgnoreCase("Parameter")) {
+				model.addEntity(new Parameter(atts));
 			}
 		}
 	}
