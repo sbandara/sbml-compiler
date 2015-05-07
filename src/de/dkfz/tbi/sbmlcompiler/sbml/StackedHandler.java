@@ -15,6 +15,7 @@ abstract class StackedHandler extends DefaultHandler {
 		private final ArrayList<ContentHandler> stack = new ArrayList
 				<ContentHandler>();
 		private final XMLReader reader;
+		private Model model = null;
 		
 		Context(XMLReader reader, ContentHandler base) {
 			this.reader = reader;
@@ -31,6 +32,10 @@ abstract class StackedHandler extends DefaultHandler {
 			stack.add(reader.getContentHandler());
 			reader.setContentHandler(next);
 		}
+
+		void setModel(Model model) { this.model = model; }
+		
+		Model getModel() { return model; }
 	}
 	
 	private int nested = 0;
@@ -45,6 +50,8 @@ abstract class StackedHandler extends DefaultHandler {
 	}
 	
 	final int getNested() { return nested; }
+	
+	final Context getContext() { return context; }
 	
 	@Override
 	public final void startElement(String uri, String local, String prefixed,
