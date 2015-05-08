@@ -54,7 +54,7 @@ public class ModelParser {
 		}
 		
 		@Override
-		public void endElement(String tag) throws SAXException {
+		public void endElement(String tag, String str) throws SAXException {
 		}
 	}
 	

@@ -217,9 +217,8 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @param j 
 	 */
-	protected final void findInnerDepends(ASTNode root,
-			Map<String, FortranCoder> bindings, int j)
-			throws SbmlCompilerException {
+	protected final void findInnerDepends(ASTNode root, Map<String,
+			FortranCoder> bindings, int j) throws SbmlCompilerException {
 		int type = root.getType();
 		Model model = compiler.getModel();
 		if ((root.isFunction()) && (type != libsbml.AST_FUNCTION_ROOT) &&
@@ -412,12 +411,13 @@ public abstract class FortranCoder {
 						break;
 					}
 				}
-				//if (compiler.isReserved(name))
 				if (k == reserved.length) {
+					// reference result from delegate function coder
 					token = callQueue.get(queueIndex ++);
 					if (queueIndex == callQueue.size()) queueIndex = 0;
 				}
 				else {
+					// use native FORTRAN function
 					token = name + "(";
 					for (long i = 0; i < numChildren; i ++) {
 						if (i > 0) {
@@ -439,6 +439,7 @@ public abstract class FortranCoder {
 			}
 		}
 		else if (x.isLambda()) {
+			// function body is the last child of the lambda node
 			token = getFormula(x.getChild(numChildren - 1), b, libsbml
 					.AST_UNKNOWN);
 		}

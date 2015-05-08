@@ -5,8 +5,6 @@ import org.xml.sax.SAXException;
 
 class EntityReader extends StackedHandler {
 
-	private String list = null;
-	
 	EntityReader(Context context) {
 		super(context);
 	}
@@ -14,10 +12,7 @@ class EntityReader extends StackedHandler {
 	@Override
 	void startElement(String tag, Attributes atts) throws SAXException {
 		int nested = getNested();
-		if ((nested == 1) && (tag.toLowerCase().startsWith("listof"))) {
-			list = tag.substring(6);
-		}
-		else if (nested == 2) {
+		if (nested == 2) {
 			Model model = getContext().getModel();
 			if (tag.equalsIgnoreCase("Compartment")) {
 				model.addEntity(new Compartment(model, atts));
@@ -32,6 +27,6 @@ class EntityReader extends StackedHandler {
 	}
 	
 	@Override
-	void endElement(String tag) throws SAXException {	
+	void endElement(String tag, String str) throws SAXException {
 	}
 }
