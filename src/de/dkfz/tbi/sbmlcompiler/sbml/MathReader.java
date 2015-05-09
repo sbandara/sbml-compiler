@@ -13,10 +13,16 @@ class MathReader extends StackedHandler {
 	}
 	
 	private final static String LAMBDA = "lambda", PLUS = "plus", MINUS =
-			"minus", TIMES = "times", DIVIDE = "divide", APPLY = "apply";
+			"minus", TIMES = "times", DIVIDE = "divide", APPLY = "apply",
+			POWER = "power", CSYMBOL = "csymbol", EXP_E = "exponentiale",
+			PI = "pi", CI = "ci", CN = "cn";
+	
+	private final static String SYM_URL = "http://www.sbml.org/sbml/symbols/",
+			SYM_DELAY = "delay", SYM_TIME = "time";
 	
 	private AstNode node = null;
 	private final MathContainer target;
+	private boolean is_apply = false;
 	
 	MathReader(Context context, MathContainer target) {
 		super(context);
@@ -47,6 +53,29 @@ class MathReader extends StackedHandler {
 		case DIVIDE:
 			child = new AstNode(NodeType.AST_DIVIDE);
 			break;
+		case POWER:
+			child = new AstNode(NodeType.AST_POWER);
+			break;
+		case CSYMBOL:
+			String def_url = atts.getValue("definitionURL");
+			if (def_url == null) {
+				throw new SAXException("Unspecified csymbol found.");
+			}
+			if (def_url.equals(SYM_URL + SYM_DELAY)) {
+				child = new AstNode(NodeType.AST_FUNCTION_DELAY);
+			}
+			else if (def_url.equals(SYM_URL + SYM_TIME)) {
+				child = new AstNode(NodeType.AST_NAME_TIME);
+			}
+			else {
+				throw new SAXException("Unknown csymbol found.");
+			}
+		case PI:
+			child = new AstNode(NodeType.AST_CONSTANT_PI);
+			break;
+		case EXP_E:
+			child = new AstNode(NodeType.AST_CONSTANT_E);
+			break;
 		}
 		if (child != null) {
 			if (node != null) {
@@ -54,16 +83,33 @@ class MathReader extends StackedHandler {
 			}
 			node = child;
 		}
+		if (tag.equalsIgnoreCase(APPLY)) {
+			is_apply = true;
+		}
+		else if (! tag.equalsIgnoreCase(CI)) {
+			is_apply = false;
+		}
 	}
 	
 	@Override
 	void endElement(String tag, String str) throws SAXException {
+		str = str.trim();
 		switch (tag.toLowerCase()) {
-		case "ci":
-			node.appendNode(new AstNode(NodeType.AST_NAME, str.trim()));
+		case CI:
+			if (is_apply) {
+				if (node == null) {
+					node = new AstNode(NodeType.AST_FUNCTION, str);
+				}
+				else {
+					node.appendNode(new AstNode(NodeType.AST_FUNCTION, str));
+				}
+				is_apply = false;
+			}
+			else {
+				node.appendNode(new AstNode(NodeType.AST_NAME, str));
+			}
 			break;
-		case "cn":
-			str = str.trim();
+		case CN:
 			if ((str.indexOf('.') != -1) || (str.indexOf('e') != -1) ||
 					(str.indexOf('E') != -1)) {
 				node.appendNode(new AstNode(Double.parseDouble(str)));

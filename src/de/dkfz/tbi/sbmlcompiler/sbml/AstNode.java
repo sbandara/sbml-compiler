@@ -6,12 +6,11 @@ public class AstNode {
 	
 	public enum NodeType {
 		
-		AST_FUNCTION(16), AST_FUNCTION_POWER(17), AST_FUNCTION_ROOT(18),
-		AST_CONSTANT(32), AST_CONSTANT_E(33), AST_CONSTANT_PI(34),
-		AST_OPERATOR(64), AST_DIVIDE(65), AST_NUMBER(1),
+		AST_FUNCTION(16), AST_CONSTANT(32), AST_CONSTANT_E(33),
+		AST_CONSTANT_PI(34), AST_OPERATOR(64), AST_DIVIDE(65), AST_NUMBER(1),
 		AST_MINUS(66), AST_PLUS(67), AST_TIMES(68), AST_POWER(69),
 		AST_UNKNOWN(0), AST_FUNCTION_DELAY(19), AST_LAMBDA(2), AST_NAME(128),
-		AST_NAME_TIME(129);
+		AST_NAME_TIME(129), AST_FUNCTION_ROOT(17), AST_FUNCTION_POWER(18);
 		
 		private final int value;
 		
@@ -34,8 +33,24 @@ public class AstNode {
 	}
 	
 	AstNode(NodeType type, String name) {
-		this.type = type;
 		this.name = name;
+		if (type == NodeType.AST_FUNCTION) {
+			this.type = resolveFunctionType(name);
+		}
+		else {
+			this.type = type;
+		}
+	}
+	
+	private NodeType resolveFunctionType(String name) {
+		switch (name) {
+		case "root":
+			return NodeType.AST_FUNCTION_ROOT;
+		case "":
+			return NodeType.AST_FUNCTION_POWER;
+		default:
+			return NodeType.AST_FUNCTION;
+		}
 	}
 	
 	public NodeType getType() { return type; }
