@@ -312,7 +312,7 @@ final public class SbmlCompiler {
 		if (! inVivoBindings.containsKey("pi")) {
     		inVivoBindings.put("pi", new ConstantCoder(3.14159, this));
     	}
-    	if (! inVivoBindings.containsKey("e")) {
+    	if (! inVivoBindings.containsKey("exponentiale")) {
     		inVivoBindings.put("e", new ConstantCoder(2.71828, this));
     	}
     }

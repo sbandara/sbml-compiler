@@ -37,7 +37,8 @@ class MathReader extends StackedHandler {
 	@Override
 	void startElement(String tag, Attributes atts) throws SAXException {
 		AstNode child = null;
-		switch (tag.toLowerCase()) {
+		tag = tag.toLowerCase();
+		switch (tag) {
 		case LAMBDA:
 			child = new AstNode(NodeType.AST_LAMBDA);
 			break;
@@ -71,10 +72,8 @@ class MathReader extends StackedHandler {
 				throw new SAXException("Unknown csymbol found.");
 			}
 		case PI:
-			child = new AstNode(NodeType.AST_CONSTANT_PI);
-			break;
 		case EXP_E:
-			child = new AstNode(NodeType.AST_CONSTANT_E);
+			child = new AstNode(NodeType.AST_CONSTANT, tag);
 			break;
 		}
 		if (child != null) {
@@ -83,10 +82,10 @@ class MathReader extends StackedHandler {
 			}
 			node = child;
 		}
-		if (tag.equalsIgnoreCase(APPLY)) {
+		if (tag.equals(APPLY)) {
 			is_apply = true;
 		}
-		else if (! tag.equalsIgnoreCase(CI)) {
+		else if (! tag.equals(CI)) {
 			is_apply = false;
 		}
 	}

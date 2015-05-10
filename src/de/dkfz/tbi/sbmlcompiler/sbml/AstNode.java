@@ -6,15 +6,20 @@ public class AstNode {
 	
 	public enum NodeType {
 		
-		AST_FUNCTION(16), AST_CONSTANT(32), AST_CONSTANT_E(33),
-		AST_CONSTANT_PI(34), AST_OPERATOR(64), AST_DIVIDE(65), AST_NUMBER(1),
-		AST_MINUS(66), AST_PLUS(67), AST_TIMES(68), AST_POWER(69),
-		AST_UNKNOWN(0), AST_FUNCTION_DELAY(19), AST_LAMBDA(2), AST_NAME(128),
-		AST_NAME_TIME(129), AST_FUNCTION_ROOT(17), AST_FUNCTION_POWER(18);
+		AST_FUNCTION(16), AST_FUNCTION_ROOT(17), AST_FUNCTION_POWER(18),
+		AST_FUNCTION_DELAY(19), AST_FUNCTION_LN(20), AST_FUNCTION_LOG(21),
+		AST_OPERATOR(32), AST_DIVIDE(33),  AST_MINUS(34), AST_PLUS(35),
+		AST_TIMES(36), AST_POWER(37), AST_NAME(64), AST_NAME_TIME(65),
+		AST_UNKNOWN(0), AST_NUMBER(1), AST_LAMBDA(2), AST_CONSTANT(3),
+		AST_MASK(240);
 		
 		private final int value;
 		
 		NodeType(int value) { this.value = value; }
+		
+		public boolean isKindOf(NodeType other) {
+			return (value & AST_MASK.value) == other.value;
+		}
 	}
 	
 	private final NodeType type;
@@ -33,11 +38,11 @@ public class AstNode {
 	}
 	
 	AstNode(NodeType type, String name) {
-		this.name = name;
 		if (type == NodeType.AST_FUNCTION) {
 			this.type = resolveFunctionType(name);
 		}
 		else {
+			this.name = name;
 			this.type = type;
 		}
 	}
@@ -46,9 +51,14 @@ public class AstNode {
 		switch (name) {
 		case "root":
 			return NodeType.AST_FUNCTION_ROOT;
-		case "":
+		case "power":
 			return NodeType.AST_FUNCTION_POWER;
+		case "ln":
+			return NodeType.AST_FUNCTION_LN;
+		case "log":
+			return NodeType.AST_FUNCTION_LOG;
 		default:
+			this.name = name;
 			return NodeType.AST_FUNCTION;
 		}
 	}
@@ -58,27 +68,19 @@ public class AstNode {
 	public boolean isNumber() { return number != null; }
 	
 	public Number getNumber() { return number; }
-	
-	private boolean isAstType(NodeType subtype, NodeType type) {
-		return (subtype.value & type.value) == type.value;
-	}
-	
-	public boolean isConstant() {
-		return isAstType(type, NodeType.AST_CONSTANT);
-	}
-	
+		
 	public boolean isName() {
-		return isAstType(type, NodeType.AST_NAME);
+		return type.isKindOf(NodeType.AST_NAME);
 	}
 	
 	public String getName() { return name; }
 	
 	public boolean isFunction() {
-		return isAstType(type, NodeType.AST_FUNCTION);
+		return type.isKindOf(NodeType.AST_FUNCTION);
 	}
 	
 	public boolean isOperator() {
-		return isAstType(type, NodeType.AST_OPERATOR);
+		return type.isKindOf(NodeType.AST_OPERATOR);
 	}
 	
 	void appendNode(AstNode child) {
