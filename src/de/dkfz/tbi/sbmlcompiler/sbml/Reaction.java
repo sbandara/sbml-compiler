@@ -1,6 +1,7 @@
 package de.dkfz.tbi.sbmlcompiler.sbml;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -15,25 +16,24 @@ public class Reaction extends SbmlBase {
 		
 		private Species species = null;
 		private final String species_key;
-		private final int stoichiometry;
+		private final Integer stoichiometry;
 		private AstNode stoichiometry_math;
 		private final ReferenceType ref_type;
 		
 		SpeciesReference(ReferenceType ref_type, String species_key,
-				int stoichiometry) {
-			this.stoichiometry = (ref_type == ReferenceType.MODIFIER) ? -1 :
-				stoichiometry;
+				Integer stoichiometry) {
+			this.stoichiometry = stoichiometry;
 			this.stoichiometry_math = null;
 			this.species_key = species_key;
 			this.ref_type = ref_type;
 			Reaction.this.species.add(this);
 		}
 		
-		SpeciesReference(ReferenceType ref_type, String species_key,
-				AstNode stoichiometry_math) {
-			this(ref_type, species_key, -1);
-			this.stoichiometry_math = (ref_type == ReferenceType.MODIFIER) ?
-					null : stoichiometry_math;
+		void setStoichiometryMath(AstNode stoichiometry_math) {
+			if (stoichiometry != null) {
+				new IllegalStateException("Stoichiometry already defined.");
+			}
+			this.stoichiometry_math = stoichiometry_math;
 		}
 		
 		public Species getSpecies() throws SbmlCompilerException {
@@ -49,15 +49,22 @@ public class Reaction extends SbmlBase {
 			return species;
 		}
 		
-		
-		public int getStoichiometry() {
+		public Integer getStoichiometry() {
 			if (ref_type != ReferenceType.MODIFIER) {
+				if (stoichiometry_math != null) {
+					return null;
+				}
+				if (stoichiometry == null) {
+					return 1;
+				}
 				return stoichiometry;
 			}
 			throw new IllegalStateException("Modifiers have no stoichiometry.");
 		}
 		
 		public AstNode getStochiometryMath() { return stoichiometry_math; }
+		
+		public ReferenceType getRefType() { return ref_type; }
 	}
 	
 	private final boolean is_reversible;
@@ -65,6 +72,7 @@ public class Reaction extends SbmlBase {
 	private AstNode kinetic_law = null;
 	private final ArrayList<SpeciesReference> species =
 			new ArrayList<SpeciesReference>();
+	private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
 	Reaction(Model model, Attributes atts) throws SAXException {
 		super(atts);
@@ -80,5 +88,18 @@ public class Reaction extends SbmlBase {
 	
 	public ArrayList<SpeciesReference> getSpecies() {
 		return new ArrayList<SpeciesReference>(species);
+	}
+
+	void addParameter(Parameter parameter) { parameters.add(parameter); }
+	
+	void resolveLocalScope() {
+		Iterator<Parameter> it = parameters.iterator();
+		while (it.hasNext()) {
+			Parameter local_parameter = it.next();
+			String local_id = local_parameter.id;
+			local_parameter.id = id + ':' + local_parameter.id;
+			kinetic_law.rescope(local_id, local_parameter.id);
+			model.addEntity(local_parameter);
+		}
 	}
 }

@@ -65,7 +65,9 @@ abstract class StackedHandler extends DefaultHandler {
 	@Override
 	final public void characters(char[] ch, int start, int length)
 			throws SAXException {
-		str.append(ch, start, length);
+		if (str != null) {
+			str.append(ch, start, length);
+		}
 	}
 	
 	@Override
@@ -74,7 +76,7 @@ abstract class StackedHandler extends DefaultHandler {
 		if (nested > 0) {
 			endElement(local, str.toString());
 		}
-		else if (-- nested == -1) {
+		if (-- nested == -1) {
 			ContentHandler prev = context.pop();
 			prev.endElement(uri, local, prefixed);
 		}

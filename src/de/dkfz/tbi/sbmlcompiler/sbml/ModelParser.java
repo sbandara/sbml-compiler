@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler.sbml;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,10 +10,11 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import de.dkfz.tbi.sbmlcompiler.SbmlCompilerException;
+import de.dkfz.tbi.sbmlcompiler.sbml.EntityReader.EntityContainer;
 
 public class ModelParser {
 	
-	private class SbmlHandler extends StackedHandler {
+	private class SbmlHandler extends StackedHandler implements EntityContainer {
 		
 		SbmlHandler(XMLReader reader) {
 			super(reader);
@@ -25,13 +24,13 @@ public class ModelParser {
 		public void startElement(String tag, Attributes atts)
 				throws SAXException {
 			int nested = getNested();
-			if ((nested == 1) && ("sbml".equalsIgnoreCase(tag))) {
+			if ((nested == 1) && ("sbml".equals(tag))) {
 				int version = 1, level = -1;
 				for (int k = 0; k < atts.getLength(); k ++) {
-					if (atts.getLocalName(k).equalsIgnoreCase("version")) {
+					if (atts.getLocalName(k).equals("version")) {
 						version = Integer.parseInt(atts.getValue(k));
 					}
-					else if (atts.getLocalName(k).equalsIgnoreCase("level")) {
+					else if (atts.getLocalName(k).equals("level")) {
 						level = Integer.parseInt(atts.getValue(k));
 					}
 				}
@@ -46,15 +45,20 @@ public class ModelParser {
 									.CANNOT_READ_SBML, null));
 				}
 			}
-			else if ((nested == 2) && ("model".equalsIgnoreCase(tag))) {	
+			else if ((nested == 2) && ("model".equals(tag))) {	
 				Context context = getContext();
 				context.setModel(new Model(atts));
-				context.push(new EntityReader(context));
+				context.push(new EntityReader(context, 2, this));
 			}
 		}
 		
 		@Override
 		public void endElement(String tag, String str) throws SAXException {
+		}
+
+		@Override
+		public void addEntity(SbmlBase entity) {
+			getContext().getModel().addEntity(entity);
 		}
 	}
 	
@@ -74,8 +78,7 @@ public class ModelParser {
 	
 	public String getName() { return name; }
 	
-	public Model parse(File sbml) throws IOException, SAXException {
-		InputStream is = new FileInputStream(sbml);
+	public Model parse(InputStream is) throws IOException, SAXException {
 		StackedHandler handler = new SbmlHandler(xml_reader);
 		xml_reader.setContentHandler(handler);
 		try {

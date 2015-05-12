@@ -19,7 +19,7 @@ public class Species extends SbmlBase {
 	Species(Model model, Attributes atts) throws SAXException {
 		super(atts);
 		this.model = model;
-		compartment_key = atts.getValue("compartments");
+		compartment_key = atts.getValue("compartment");
 		initial_amount = getDoubleAttOpt(atts, "initialAmount");
 		initial_conc = getDoubleAttOpt(atts, "initialConcentration");		
 		substance_units = atts.getValue("substanceUnits");

@@ -5,24 +5,37 @@ import org.xml.sax.SAXException;
 
 class EntityReader extends StackedHandler {
 
-	EntityReader(Context context) {
+	interface EntityContainer {
+		void addEntity(SbmlBase entity); 
+	}
+	
+	private final int expected_nesting;
+	private final EntityContainer target;
+
+	EntityReader(Context context, int nesting, EntityContainer target) {
 		super(context);
+		this.expected_nesting = nesting;
+		this.target = target;
 	}
 	
 	@Override
 	void startElement(String tag, Attributes atts) throws SAXException {
 		int nested = getNested();
-		if (nested == 2) {
-			Model model = getContext().getModel();
-			if (tag.equalsIgnoreCase("Compartment")) {
-				model.addEntity(new Compartment(model, atts));
+		Context context = getContext();
+		if (nested == expected_nesting) {
+			Model model = context.getModel();
+			if (tag.equals("compartment")) {
+				target.addEntity(new Compartment(model, atts));
 			}
-			else if (tag.equalsIgnoreCase("Species")) {
-				model.addEntity(new Species(model, atts));
+			else if (tag.equals("species")) {
+				target.addEntity(new Species(model, atts));
 			}
-			else if (tag.equalsIgnoreCase("Parameter")) {
-				model.addEntity(new Parameter(atts));
+			else if (tag.equals("parameter")) {
+				target.addEntity(new Parameter(atts));
 			}
+		}
+		else if (tag.equals("listOfReactions")) {
+			context.push(new ReactionReader(context));
 		}
 	}
 	

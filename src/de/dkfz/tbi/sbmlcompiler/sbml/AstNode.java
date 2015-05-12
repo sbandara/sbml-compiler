@@ -1,6 +1,7 @@
 package de.dkfz.tbi.sbmlcompiler.sbml;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class AstNode {
 	
@@ -93,4 +94,17 @@ public class AstNode {
 	public AstNode getChild(int index) { return children.get(index); }
 	
 	public int getNumChildren() { return children.size(); }
+	
+	void rescope(String local_id, String scoped_id) {
+		Iterator<AstNode> it = children.iterator();
+		while (it.hasNext()) {
+			AstNode c = it.next();
+			if ((c.type == NodeType.AST_NAME) && (c.name.equals(local_id))) {
+				c.name = scoped_id;
+			}
+			else if (c.children.size() > 0) {
+				c.rescope(local_id, scoped_id);
+			}
+		}
+	}
 }

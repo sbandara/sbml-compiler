@@ -37,7 +37,6 @@ class MathReader extends StackedHandler {
 	@Override
 	void startElement(String tag, Attributes atts) throws SAXException {
 		AstNode child = null;
-		tag = tag.toLowerCase();
 		switch (tag) {
 		case LAMBDA:
 			child = new AstNode(NodeType.AST_LAMBDA);
@@ -93,7 +92,7 @@ class MathReader extends StackedHandler {
 	@Override
 	void endElement(String tag, String str) throws SAXException {
 		str = str.trim();
-		switch (tag.toLowerCase()) {
+		switch (tag) {
 		case CI:
 			if (is_apply) {
 				if (node == null) {
@@ -118,7 +117,7 @@ class MathReader extends StackedHandler {
 			}
 			break;
 		}
-		if ((tag.equalsIgnoreCase(LAMBDA)) || (tag.equalsIgnoreCase(APPLY))) {
+		if ((tag.equals(LAMBDA)) || (tag.equals(APPLY))) {
 			AstNode parent = node.getParent();
 			if (parent == null) {
 				target.setRootNode(node);
