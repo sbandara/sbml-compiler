@@ -3,12 +3,12 @@ package de.dkfz.tbi.sbmlcompiler.sbml;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import de.dkfz.tbi.sbmlcompiler.sbml.EntityReader.EntityContainer;
+import de.dkfz.tbi.sbmlcompiler.sbml.EntityReader.ModelBuilder;
 import de.dkfz.tbi.sbmlcompiler.sbml.MathReader.MathContainer;
 import de.dkfz.tbi.sbmlcompiler.sbml.Reaction.*;
 
 class ReactionReader extends StackedHandler implements MathContainer,
-		EntityContainer {
+		ModelBuilder {
 
 	private Reaction reaction = null;
 	private ReferenceType ref_type = null;
@@ -57,7 +57,7 @@ class ReactionReader extends StackedHandler implements MathContainer,
 	void endElement(String tag, String str) throws SAXException {
 		if (tag.equals("reaction")) {
 			reaction.resolveLocalScope();
-			getContext().getModel().addEntity(reaction);
+			getContext().getModel().entities.put(reaction.id, reaction);
 		}
 		else if (tag.equals("speciesReference") || tag.equals(
 				"modifierSpeciesReference")) {
@@ -79,4 +79,7 @@ class ReactionReader extends StackedHandler implements MathContainer,
 	public void addEntity(SbmlBase entity) {
 		reaction.addParameter((Parameter) entity);
 	}
+
+	@Override
+	public void addRule(Rule rule) { }
 }

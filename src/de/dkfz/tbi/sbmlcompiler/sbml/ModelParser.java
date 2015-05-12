@@ -10,11 +10,11 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import de.dkfz.tbi.sbmlcompiler.SbmlCompilerException;
-import de.dkfz.tbi.sbmlcompiler.sbml.EntityReader.EntityContainer;
+import de.dkfz.tbi.sbmlcompiler.sbml.EntityReader.ModelBuilder;
 
 public class ModelParser {
 	
-	private class SbmlHandler extends StackedHandler implements EntityContainer {
+	private class SbmlHandler extends StackedHandler implements ModelBuilder {
 		
 		SbmlHandler(XMLReader reader) {
 			super(reader);
@@ -58,7 +58,12 @@ public class ModelParser {
 
 		@Override
 		public void addEntity(SbmlBase entity) {
-			getContext().getModel().addEntity(entity);
+			getContext().getModel().entities.put(entity.id, entity);
+		}
+
+		@Override
+		public void addRule(Rule rule) {
+			getContext().getModel().rules.add(rule);
 		}
 	}
 	

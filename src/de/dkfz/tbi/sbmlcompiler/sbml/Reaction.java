@@ -41,9 +41,10 @@ public class Reaction extends SbmlBase {
 				try {
 					species = (Species) model.getEntity(species_key);
 				}
-				catch (ClassCastException e) {
+				catch (ClassCastException e) { }
+				if (species == null) {
 					throw new SbmlCompilerException(SbmlCompilerException
-							.UNKNOWN_MODEL_ENTITY, e);
+							.UNKNOWN_MODEL_ENTITY, species_key);
 				}
 			}
 			return species;
@@ -99,7 +100,7 @@ public class Reaction extends SbmlBase {
 			String local_id = local_parameter.id;
 			local_parameter.id = id + ':' + local_parameter.id;
 			kinetic_law.rescope(local_id, local_parameter.id);
-			model.addEntity(local_parameter);
+			model.entities.put(local_parameter.id, local_parameter);
 		}
 	}
 }
