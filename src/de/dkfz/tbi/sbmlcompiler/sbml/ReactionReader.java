@@ -54,7 +54,7 @@ class ReactionReader extends StackedHandler implements MathContainer,
 	}
 
 	@Override
-	void endElement(String tag, String str) throws SAXException {
+	void endElement(String tag) throws SAXException {
 		if (tag.equals("reaction")) {
 			reaction.resolveLocalScope();
 			getContext().getModel().entities.put(reaction.id, reaction);

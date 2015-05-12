@@ -40,7 +40,6 @@ abstract class StackedHandler extends DefaultHandler {
 	
 	private int nested = 0;
 	private final Context context;
-	private StringBuilder str;
 		
 	StackedHandler(Context context) {
 		this.context = context;
@@ -53,28 +52,19 @@ abstract class StackedHandler extends DefaultHandler {
 	final int getNested() { return nested; }
 	
 	final Context getContext() { return context; }
-	
+		
 	@Override
 	public final void startElement(String uri, String local, String prefixed,
 			Attributes atts) throws SAXException {
 		nested ++;
-		str = new StringBuilder();
 		startElement(local, atts);
 	}
-	
-	@Override
-	final public void characters(char[] ch, int start, int length)
-			throws SAXException {
-		if (str != null) {
-			str.append(ch, start, length);
-		}
-	}
-	
+		
 	@Override
 	public final void endElement(String uri, String local, String prefixed)
 			throws SAXException {
 		if (nested > 0) {
-			endElement(local, str.toString());
+			endElement(local);
 		}
 		if (-- nested == -1) {
 			ContentHandler prev = context.pop();
@@ -84,5 +74,5 @@ abstract class StackedHandler extends DefaultHandler {
 	
 	abstract void startElement(String tag, Attributes atts) throws SAXException;
 
-	abstract void endElement(String tag, String str) throws SAXException;
+	abstract void endElement(String tag) throws SAXException;
 }

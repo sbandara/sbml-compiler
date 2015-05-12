@@ -65,7 +65,7 @@ class EntityReader extends StackedHandler implements MathContainer {
 	}
 	
 	@Override
-	void endElement(String tag, String str) throws SAXException {
+	void endElement(String tag) throws SAXException {
 		rule = null;
 		function = null;
 	}

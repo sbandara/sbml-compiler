@@ -15,7 +15,7 @@ class MathReader extends StackedHandler {
 	private final static String LAMBDA = "lambda", PLUS = "plus", MINUS =
 			"minus", TIMES = "times", DIVIDE = "divide", APPLY = "apply",
 			POWER = "power", CSYMBOL = "csymbol", EXP_E = "exponentiale",
-			PI = "pi", CI = "ci", CN = "cn";
+			PI = "pi", CI = "ci", CN = "cn", SEP = "sep";
 	
 	private final static String SYM_URL = "http://www.sbml.org/sbml/symbols/",
 			SYM_DELAY = "delay", SYM_TIME = "time";
@@ -23,6 +23,7 @@ class MathReader extends StackedHandler {
 	private AstNode node = null;
 	private final MathContainer target;
 	private boolean is_apply = false;
+	private StringBuilder text = null;
 	
 	MathReader(Context context, MathContainer target) {
 		super(context);
@@ -55,6 +56,10 @@ class MathReader extends StackedHandler {
 			break;
 		case POWER:
 			child = new AstNode(NodeType.AST_POWER);
+			break;
+		case CI:
+		case CN:
+			text = new StringBuilder();
 			break;
 		case CSYMBOL:
 			String def_url = atts.getValue("definitionURL");
@@ -96,11 +101,19 @@ class MathReader extends StackedHandler {
 	}
 	
 	@Override
-	void endElement(String tag, String str) throws SAXException {
-		str = str.trim();
+	void endElement(String tag) throws SAXException {
 		AstNode child = null;
 		switch (tag) {
+		case SEP:
+			if (text == null) { 
+				throw new SAXException("Found separator outside of <cn>-tag.");
+			}
+			else {
+				text.append('e');
+			}
+			break;
 		case CI:
+			String str = text.toString();
 			if (is_apply) {
 				child = new AstNode(NodeType.AST_FUNCTION, str);
 				is_apply = false;
@@ -110,7 +123,7 @@ class MathReader extends StackedHandler {
 			}
 			break;
 		case CN:
-			// TODO: handle e-notation
+			str = text.toString();
 			if ((str.indexOf('.') != -1) || (str.indexOf('e') != -1) ||
 					(str.indexOf('E') != -1)) {
 				child = new AstNode(Double.parseDouble(str));
@@ -127,6 +140,14 @@ class MathReader extends StackedHandler {
 				target.setRootNode(node);
 			}
 			node = parent;
+		}
+	}
+	
+	@Override
+	final public void characters(char[] ch, int start, int length)
+			throws SAXException {
+		if (text != null) {
+			text.append(String.copyValueOf(ch, start, length).trim());
 		}
 	}
 }
