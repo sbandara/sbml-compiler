@@ -15,12 +15,13 @@ import de.dkfz.tbi.sbmlcompiler.sbml.Reaction.*;
 
 public class ModelReaderTest {
 	
-	private static final String model_file = "/Tyson1991-L2V1.xml";
+	private static final String TYSON_FILE = "/Tyson1991-L2V1.xml",
+			MITCHELL_FILE = "/Mitchell2013-L2V1.xml";
 
 	@Test
-	public void testWithTyson1991() {
+	public void testWithTyson1991() throws Exception {
 		ModelParser parser = new ModelParser();
-		InputStream is = this.getClass().getResourceAsStream(model_file);
+		InputStream is = this.getClass().getResourceAsStream(TYSON_FILE);
 		try {
 			Model model = parser.parse(is);
 			Species m = (Species) model.getEntity("M");
@@ -64,13 +65,31 @@ public class ModelReaderTest {
 			assertEquals(expression.getType(), NodeType.AST_PLUS);
 			assertEquals(expression.getNumChildren(), 4);
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		finally {
 			try {
 				is.close();
 			}
 			catch (IOException ignore) { }
-			fail();
+		}
+	}
+	
+	@Test
+	public void testWithMitchell2013() throws Exception {
+		ModelParser parser = new ModelParser();
+		InputStream is = this.getClass().getResourceAsStream(MITCHELL_FILE);
+		try {
+			Model model = parser.parse(is);
+			Function f3 = (Function) model.getEntity("function_3");
+			assertEquals(f3.getNumArguments(), 4);
+			assertEquals(f3.getArgument(3), "K");
+			AstNode def = f3.getDefinition();
+			assertEquals(def.getType(), NodeType.AST_TIMES);
+		}
+		finally {
+			try {
+				is.close();
+			}
+			catch (IOException ignore) { }
 		}
 	}
 }

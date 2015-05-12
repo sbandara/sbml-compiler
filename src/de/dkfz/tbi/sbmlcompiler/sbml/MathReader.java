@@ -75,12 +75,7 @@ class MathReader extends StackedHandler {
 			child = new AstNode(NodeType.AST_CONSTANT, tag);
 			break;
 		}
-		if (child != null) {
-			if (node != null) {
-				node.appendNode(child);
-			}
-			node = child;
-		}
+		insertNode(child);
 		if (tag.equals(APPLY)) {
 			is_apply = true;
 		}
@@ -89,34 +84,43 @@ class MathReader extends StackedHandler {
 		}
 	}
 	
+	private void insertNode(AstNode child) {
+		if (child != null) {
+			if (node != null) {
+				node.appendNode(child);
+			}
+			if (child.isFunction() || child.isOperator() || (node == null)) {
+				node = child;
+			}
+		}
+	}
+	
 	@Override
 	void endElement(String tag, String str) throws SAXException {
 		str = str.trim();
+		AstNode child = null;
 		switch (tag) {
 		case CI:
 			if (is_apply) {
-				if (node == null) {
-					node = new AstNode(NodeType.AST_FUNCTION, str);
-				}
-				else {
-					node.appendNode(new AstNode(NodeType.AST_FUNCTION, str));
-				}
+				child = new AstNode(NodeType.AST_FUNCTION, str);
 				is_apply = false;
 			}
 			else {
-				node.appendNode(new AstNode(NodeType.AST_NAME, str));
+				child = new AstNode(NodeType.AST_NAME, str);
 			}
 			break;
 		case CN:
+			// TODO: handle e-notation
 			if ((str.indexOf('.') != -1) || (str.indexOf('e') != -1) ||
 					(str.indexOf('E') != -1)) {
-				node.appendNode(new AstNode(Double.parseDouble(str)));
+				child = new AstNode(Double.parseDouble(str));
 			}
 			else {
-				node.appendNode(new AstNode(Integer.parseInt(str)));
+				child = new AstNode(Integer.parseInt(str));
 			}
 			break;
 		}
+		insertNode(child);
 		if ((tag.equals(LAMBDA)) || (tag.equals(APPLY))) {
 			AstNode parent = node.getParent();
 			if (parent == null) {
