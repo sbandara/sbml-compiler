@@ -107,4 +107,34 @@ public class AstNode {
 			}
 		}
 	}
+	
+	void reduceToBinary() {
+		final int n = children.size();
+		if ((n > 2)  && ((type == NodeType.AST_PLUS) || (type == NodeType
+				.AST_TIMES))) {
+			final int h = n / 2;
+			int k = 0;
+			AstNode a;
+			if (n == 3) {
+				a = children.get(k ++);
+			}
+			else {
+				a = new AstNode(type);
+				while (k < h) {
+					a.appendNode(children.get(k ++));
+				}
+			}
+			AstNode b = new AstNode(type);
+			while (k < n) {
+				b.appendNode(children.get(k ++));
+			}
+			children.clear();
+			children.add(a);
+			children.add(b);
+		}
+		Iterator<AstNode> it = children.iterator();
+		while (it.hasNext()) {
+			it.next().reduceToBinary();
+		}
+	}
 }

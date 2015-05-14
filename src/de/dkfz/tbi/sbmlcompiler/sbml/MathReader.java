@@ -137,6 +137,7 @@ class MathReader extends StackedHandler {
 		if ((tag.equals(LAMBDA)) || (tag.equals(APPLY))) {
 			AstNode parent = node.getParent();
 			if (parent == null) {
+				node.reduceToBinary();
 				target.setRootNode(node);
 			}
 			node = parent;
