@@ -10,18 +10,11 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SbmlCompilerTest {
-	
-	@BeforeClass
-	public static void setUp() {
-    	// System.loadLibrary("sbmlj");
-	}
 
-	private static final String TYSON_FILE = "/Tyson1991-L2V1.xml",
-			MITCHELL_FILE = "/Mitchell2013-L2V1.xml";
+	private static final String TYSON_FILE = "/Tyson1991-L2V1.xml";
 
 	@Test
 	public void testTyson1991() throws SbmlCompilerException {
@@ -41,10 +34,11 @@ public class SbmlCompilerTest {
 				new HashSet<String>());
 		String code = fn.get(0).toString();
 		HashSet<String> params = new HashSet<String>();
-		Matcher param = Pattern.compile("\\$(\\w+)\\$").matcher(code);
+		Matcher param = Pattern.compile("\\$Reaction\\d:(\\w+)\\$").matcher(code);
 		while (param.find()) {
 			params.add(param.group(1));
 		}
+		System.out.println(code);
 		assertTrue(params.contains("k1aa"));
 		assertTrue(params.contains("k2"));
 		assertTrue(params.contains("k3"));

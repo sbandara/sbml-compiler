@@ -5,7 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.sbml.libsbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
 
 /**
  * Element of a FORTRAN function. A <code>FortranCoder</code> generates a
@@ -78,12 +79,15 @@ public abstract class FortranCoder {
 	 * @param dependency name of a FortranCoder to be added to the set of
 	 * dependencies  
 	 */
-	protected final void addDepend(String dependency) {
-		((HashSet<String>)depends).add(dependency);
+	final void addDepend(String dependency) throws SbmlCompilerException {
+		depends.add(dependency);
 		if (onlyConc) {
-			Species species = compiler.getModel().getSpecies(dependency);
-			if ((species != null) && (species.isSetInitialAmount())) {
-				depends.add(species.getCompartment());
+			SbmlBase entity = compiler.getModel().getEntity(dependency);
+			if (entity instanceof Species) {
+				Species species = (Species) entity;
+				if (species.getInitialAmount() != null) {
+					depends.add(species.getCompartment().getId());
+				}
 			}
 		}
 	}
@@ -217,32 +221,29 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @param j 
 	 */
-	protected final void findInnerDepends(ASTNode root, Map<String,
+	final void findInnerDepends(AstNode root, Map<String,
 			FortranCoder> bindings, int j) throws SbmlCompilerException {
-		int type = root.getType();
+		NodeType type = root.getType();
 		Model model = compiler.getModel();
-		if ((root.isFunction()) && (type != libsbml.AST_FUNCTION_ROOT) &&
-				(type != libsbml.AST_FUNCTION_POWER)) {
+		if ((root.isFunction()) && (type != NodeType.AST_FUNCTION_ROOT) &&
+				(type != NodeType.AST_FUNCTION_POWER)) {
 			String fn_name = root.getName();
 			FortranCoder fn_coder = null;
-			if (fn_name.equals("delay")) {
-				ASTNode reference = root.getChild(0);
-				ASTNode delay = root.getChild(1);
+			if (type == NodeType.AST_FUNCTION_DELAY) {
+				AstNode reference = root.getChild(0);
+				AstNode delay = root.getChild(1);
 				fn_coder = new TimeDelayCoder(reference, delay, onlyConc,
 						compiler);
 			}
 			else {
-				FunctionDefinition fn_def = model.getFunctionDefinition(
-						fn_name);
+				Function fn_def = (Function) model.getEntity(fn_name);
 				if (fn_def != null) {
-					fn_coder = new FunctionCoder(fn_def.getMath(), root,
+					fn_coder = new FunctionCoder(fn_def.getDefinition(), root,
 							onlyConc, compiler);
 				}
-				else {
-					if (isReserved(fn_name)) {
-						throw new SbmlCompilerException(
-							SbmlCompilerException.FUNCTION_NOT_FOUND, fn_name);
-					}
+				else if (isReserved(fn_name)) {
+					throw new SbmlCompilerException(
+						SbmlCompilerException.FUNCTION_NOT_FOUND, fn_name);
 				}
 			}
 			if (fn_coder != null) {
@@ -284,12 +285,14 @@ public abstract class FortranCoder {
 		FortranCoder coder = bindings.get(name);
 		String varname = coder.getVarName();
 		if ((! (coder instanceof ControlCoder)) && (onlyConc)) {
-			SBase ref = coder.getSbmlNode();
-			if ((ref != null) && (ref.getTypeCode() == libsbml.SBML_SPECIES)
-					&& (((Species)ref).isSetInitialAmount())) {
-				String compartment = ((Species)ref).getCompartment();
-				String vol = bindings.get(compartment).getVarName();
-				varname = "(" + varname + " / " + vol + ")";
+			SbmlBase ref = coder.getSbmlNode();
+			if (ref instanceof Species) {
+				Species species = (Species) ref;
+				if (species.getInitialAmount() != null) {
+					String vol_id = species.getCompartment().getId();
+					String vol = bindings.get(vol_id).getVarName();
+					varname = "(" + varname + " / " + vol + ")";
+				}
 			}
 		}
 		return varname;
@@ -333,75 +336,70 @@ public abstract class FortranCoder {
 	 * @return mathematical expression in FORTRAN syntax
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	protected final String getFormula(ASTNode x, Map<String, FortranCoder> b,
-			int outer) throws SbmlCompilerException {
-		boolean paranth = false;
+	protected final String getFormula(AstNode x, Map<String, FortranCoder> b,
+			NodeType outer) throws SbmlCompilerException {
+		boolean parenthesis = false;
 		String token;
-		long numChildren = x.getNumChildren();
-		int type = x.getType();
+		int numChildren = x.getNumChildren();
+		NodeType type = x.getType();
 		if (x.isOperator()) {
-			if (x.isUMinus()) {
+			if ((type == NodeType.AST_MINUS) && (x.getNumChildren() == 1)) {
 				token = "-" + getFormula(x.getChild(0), b, type);
 			}
 			else {
 				String op;
-				switch(type) {
-				case libsbml.AST_PLUS:
+				switch (type) {
+				case AST_PLUS:
 					op = " + ";
-					if ((outer != libsbml.AST_PLUS) && (outer !=
-						libsbml.AST_UNKNOWN)) paranth = true;
+					if ((outer != NodeType.AST_PLUS) && (outer != NodeType
+							.AST_UNKNOWN)) parenthesis = true;
 					break;
-				case libsbml.AST_MINUS:
+				case AST_MINUS:
 					op = " - ";
-					if ((outer != libsbml.AST_PLUS) && (outer !=
-						libsbml.AST_UNKNOWN)) paranth = true;
+					if ((outer != NodeType.AST_PLUS) && (outer != NodeType
+							.AST_UNKNOWN)) parenthesis = true;
 					break;
-				case libsbml.AST_TIMES:
+				case AST_TIMES:
 					op = " * ";
-					if ((outer == libsbml.AST_DIVIDE) || (outer ==
-						libsbml.AST_POWER))	paranth = true;
+					if ((outer == NodeType.AST_DIVIDE) || (outer == NodeType
+							.AST_POWER)) parenthesis = true;
 					break;
-				case libsbml.AST_DIVIDE:
+				case AST_DIVIDE:
 					op = " / ";
-					if ((outer == libsbml.AST_DIVIDE) || (outer ==
-						libsbml.AST_POWER))	paranth = true;
+					if ((outer == NodeType.AST_DIVIDE) || (outer == NodeType
+							.AST_POWER)) parenthesis = true;
 					break;
-				case libsbml.AST_POWER:
+				case AST_POWER:
 					op = " ** ";
-					if (outer == libsbml.AST_POWER) paranth = true;
+					if (outer == NodeType.AST_POWER) parenthesis = true;
 					break;
 				default:
 					throw new SbmlCompilerException(SbmlCompilerException
-							.UNSUPPORTED_AST_NODE, new Integer(type));
+							.UNSUPPORTED_AST_NODE, type);
 				}
-				token = getFormula(x.getChild(0), b, type) + op +
-					getFormula(x.getChild(1), b, type);
+				token = getFormula(x.getChild(0), b, type) + op + getFormula(
+						x.getChild(1), b, type);
 			}
 		}
-		else if (x.isConstant()) {
+		else if (type == NodeType.AST_CONSTANT) {
 			token = getVarName(b, x.getName());
 		}
 		else if (x.isNumber()) {
-			if (x.isInteger()) {
-				token = Integer.toString(x.getInteger());
-			}
-			else {
-				token = Double.toString(x.getReal());
-			}
+			token = x.getNumber().toString();
 		}
 		else if (x.isFunction()) {
 			String name = x.getName();
-			if (type == libsbml.AST_FUNCTION_POWER) {
-				token = getFormula(x.getChild(0), b, libsbml
-					.AST_POWER) + " ** "+ getFormula(x.getChild(1),
-					b, libsbml.AST_POWER);
-				if (outer == libsbml.AST_POWER) paranth = true;
+			if (type == NodeType.AST_FUNCTION_POWER) {
+				token = getFormula(x.getChild(0), b, NodeType.AST_POWER) +
+						" ** "+ getFormula(x.getChild(1), b, NodeType
+								.AST_POWER);
+				if (outer == NodeType.AST_POWER) parenthesis = true;
 			}
-			else if (type == libsbml.AST_FUNCTION_ROOT) {
-				token = getFormula(x.getChild(1), b, libsbml
-					.AST_POWER) + " ** (1 / "+ getFormula(x.getChild
-					(0), b, libsbml.AST_DIVIDE) + ")";
-				if (outer == libsbml.AST_POWER) paranth = true;
+			else if (type == NodeType.AST_FUNCTION_ROOT) {
+				token = getFormula(x.getChild(1), b, NodeType.AST_POWER) +
+						" ** (1 / "+ getFormula(x.getChild(0), b, NodeType
+								.AST_DIVIDE) + ")";
+				if (outer == NodeType.AST_POWER) parenthesis = true;
 			}
 			else {
 				int k;
@@ -419,11 +417,11 @@ public abstract class FortranCoder {
 				else {
 					// use native FORTRAN function
 					token = name + "(";
-					for (long i = 0; i < numChildren; i ++) {
+					for (int i = 0; i < numChildren; i ++) {
 						if (i > 0) {
 							token += ", ";
 						}
-						token +=  getFormula(x.getChild(i), b, libsbml
+						token += getFormula(x.getChild(i), b, NodeType
 								.AST_FUNCTION);
 					}
 					token += ")";
@@ -431,21 +429,21 @@ public abstract class FortranCoder {
 			}
 		}
 		else if (x.isName()) {
-			if (type == libsbml.AST_NAME_TIME) {
+			if (type == NodeType.AST_NAME_TIME) {
 				token = "t";
 			}
 			else {
 				token = getVarName(b, x.getName());
 			}
 		}
-		else if (x.isLambda()) {
+		else if (type == NodeType.AST_LAMBDA) {
 			// function body is the last child of the lambda node
-			token = getFormula(x.getChild(numChildren - 1), b, libsbml
+			token = getFormula(x.getChild(numChildren - 1), b, NodeType
 					.AST_UNKNOWN);
 		}
 		else throw new SbmlCompilerException(SbmlCompilerException
-				.UNSUPPORTED_AST_NODE, new Integer(type));
-		if (paranth) token = "(" + token + ")";
+				.UNSUPPORTED_AST_NODE, type);
+		if (parenthesis) token = "(" + token + ")";
 		return token;
 	}
 	
@@ -456,7 +454,7 @@ public abstract class FortranCoder {
 	 * @return object of the entity this <code>FortranCoder</code>
 	 * represents or null
 	 */
-	public abstract SBase getSbmlNode();
+	public abstract SbmlBase getSbmlNode();
 	
 	/**
 	 * Returns whether this <code>FunctionCoder</code> has implemented its

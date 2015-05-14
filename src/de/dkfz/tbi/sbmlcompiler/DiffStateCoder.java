@@ -1,15 +1,12 @@
 package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 
-import org.sbml.libsbml.ASTNode;
-import org.sbml.libsbml.ListOf;
-import org.sbml.libsbml.Reaction;
-import org.sbml.libsbml.SBase;
-import org.sbml.libsbml.Species;
-import org.sbml.libsbml.SpeciesReference;
-import org.sbml.libsbml.libsbml;
+import de.dkfz.tbi.sbmlcompiler.sbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
+import de.dkfz.tbi.sbmlcompiler.sbml.Reaction.*;
 
 /**
  * Implements the calculation of the derivative of a differential state, and
@@ -24,7 +21,7 @@ class DiffStateCoder extends StateVariable {
 	/**
 	 * The libSBML object of the model entity this coder represents. 
 	 */
-	private SBase ref_obj = null;
+	private SbmlBase ref_obj = null;
 	
 	/**
 	 * Array of the names of the reactions this species is involved in as a
@@ -38,14 +35,14 @@ class DiffStateCoder extends StateVariable {
 	 * the model. If <code>my_diffeq</code> exists, <code>my_reaction</code>
 	 * must be <code>null</code>.
 	 */
-	private ASTNode my_diffeq = null;
+	private AstNode my_diffeq = null;
 
 	/**
 	 * @param obj libSBML object of the species this coder represents
 	 * @param reaction array of the names of the reactions this species is
 	 * involved in as a reactant or product
 	 */
-	DiffStateCoder(SBase obj, String reaction[], SbmlCompiler compiler) {
+	DiffStateCoder(SbmlBase obj, String reaction[], SbmlCompiler compiler) {
 		super(compiler);
 		ref_obj = obj;
 		my_reaction = reaction;
@@ -55,7 +52,7 @@ class DiffStateCoder extends StateVariable {
 	 * @param obj libSBML object of the model entity this coder represents
 	 * @param diffeq abstract syntax tree of the rate rule
 	 */
-	DiffStateCoder(SBase obj, ASTNode diffeq, SbmlCompiler compiler) {
+	DiffStateCoder(SbmlBase obj, AstNode diffeq, SbmlCompiler compiler) {
 		super(compiler);
 		ref_obj = obj;
 		my_diffeq = diffeq;
@@ -78,66 +75,53 @@ class DiffStateCoder extends StateVariable {
 	 * given in concentration units, the resulting amount is divided by the
 	 * volume of the compartment the species is located in.
 	 */
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Map<String, FortranCoder>
+			bindings) throws SbmlCompilerException {
 		String code = "f(" + getId() + ") = ";
 		if (my_reaction != null) {
-			Species species = (Species)ref_obj;
-			if (! species.isSetInitialAmount()) {
+			Species species = (Species) ref_obj;
+			if (species.getInitialAmount() == null) {
 				code += "(";
 			}
-			String spec_name = species.getId();
-			for (int i = 0; i < my_reaction.length;) {
+			for (int i = 0; i < my_reaction.length; i ++) {
 				FortranCoder coder = null;
 				coder = bindings.get(my_reaction[i]);
 				if ((coder == null) || (coder instanceof ConstantCoder)) {
 					code += "+ 0 ";
 				}
 				else {
-					Reaction rxn = (Reaction)coder.getSbmlNode();
-					ListOf listOfSpecRef = rxn.getListOfProducts();
-					SpeciesReference specRef = null;
-					for (int k = 0; k < rxn.getNumProducts(); k ++) {
-						SpeciesReference s_ref = (SpeciesReference)
-								listOfSpecRef.get(k);
-						if (s_ref.getSpecies().equals(spec_name)) {
+					Reaction rxn = (Reaction) coder.getSbmlNode();
+					Iterator<SpeciesReference> it = rxn.getSpecies().iterator();
+					while (it.hasNext()) {
+						SpeciesReference ref = it.next();
+						if (ref.getSpecies() != species) {
+							continue;
+						}
+						ReferenceType ref_type = ref.getRefType();
+						if (ref_type == ReferenceType.PRODUCT) {
 							code += "+ ";
-							specRef = s_ref;
-							break;
 						}
-					}
-					if (specRef == null) {
-						listOfSpecRef = rxn.getListOfReactants();
-						for (int k = 0; k < rxn.getNumReactants(); k ++) {
-							SpeciesReference s_ref = (SpeciesReference)
-									listOfSpecRef.get(k);
-							if (s_ref.getSpecies().equals(spec_name)) {
-								code += "- ";
-								specRef = s_ref;
-								break;
-							}
+						else if (ref_type == ReferenceType.REACTANT) {
+							code += "- ";
 						}
-					}
-					if (specRef.getStoichiometry() != 1) {
-						code += Double.toString(specRef.getStoichiometry())
-								+ " * ";
-					}
-					code += coder.getVarName();
-					if (++ i < my_reaction.length) {
-						code += " ";
+						int stoichiometry = ref.getStoichiometry();
+						if (stoichiometry != 1) {
+							code += stoichiometry + " * ";
+						}
+						code += coder.getVarName() + ' ';
 					}
 				}
 			}
-			if (! species.isSetInitialAmount()) {
+			if (species.getInitialAmount() == null) {
 				FortranCoder vc = bindings.get(species.getCompartment());
-				if (! ((vc instanceof ConstantCoder) && (((ConstantCoder)vc)
+				if (! ((vc instanceof ConstantCoder) && (((ConstantCoder) vc)
 						.getValue() == 1))) {
 					code += ") / " + vc.getVarName();
 				}
 			}
 		}
 		else if (my_diffeq != null) {
-			code += getFormula(my_diffeq, bindings, libsbml.AST_UNKNOWN);
+			code += getFormula(my_diffeq, bindings, NodeType.AST_UNKNOWN);
 		}
 		else throw new InternalError();
 		target.appendStatement(code);
@@ -153,8 +137,8 @@ class DiffStateCoder extends StateVariable {
 				}
 			}
 			Species species = (Species)ref_obj;
-			if (! species.isSetInitialAmount()) {
-				addDepend(species.getCompartment());
+			if (species.getInitialAmount() == null) {
+				addDepend(species.getCompartment().getId());
 			}
 		}
 		else {
@@ -162,7 +146,7 @@ class DiffStateCoder extends StateVariable {
 		}
 	}
 	
-	public SBase getSbmlNode() { return ref_obj; }
+	public SbmlBase getSbmlNode() { return ref_obj; }
 
 	String getPrefix() { return "xd"; }
 

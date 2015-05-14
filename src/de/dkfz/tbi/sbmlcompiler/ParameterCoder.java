@@ -1,7 +1,8 @@
 package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.Map;
-import org.sbml.libsbml.SBase;
+
+import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 /**
  * Implements a reference to an estimated parameter by assigning its value
@@ -15,7 +16,7 @@ class ParameterCoder extends FortranCoder {
 	/**
 	 * The libSBML object of the model entity this coder implements. 
 	 */
-	private SBase refObj;
+	private SbmlBase refObj;
 	
 	/**
 	 * The id of the model entity or the name of a calibration parameter.
@@ -27,7 +28,7 @@ class ParameterCoder extends FortranCoder {
 	 * @param name id of the model entity or the name of a calibration
 	 * parameter, which will be decorated, and used as mark
 	 */
-	ParameterCoder(SBase param, String name, SbmlCompiler compiler) {
+	ParameterCoder(SbmlBase param, String name, SbmlCompiler compiler) {
 		super(compiler);
 		refObj = param;
 		paramName = name;
@@ -43,7 +44,7 @@ class ParameterCoder extends FortranCoder {
 	
 	protected void initialize(Map<String, FortranCoder> bindings) { }
 	
-	public SBase getSbmlNode() { return refObj; }
+	public SbmlBase getSbmlNode() { return refObj; }
 
 	String getPrefix() { return "par"; }
 }

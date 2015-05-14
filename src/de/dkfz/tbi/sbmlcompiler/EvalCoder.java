@@ -2,9 +2,8 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.Map;
 
-import org.sbml.libsbml.ASTNode;
-import org.sbml.libsbml.SBase;
-import org.sbml.libsbml.libsbml;
+import de.dkfz.tbi.sbmlcompiler.sbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
 
 /**
  * Evaluates simple mathematical expressions. <code>EvalCoder</code> only
@@ -19,12 +18,12 @@ class EvalCoder extends FortranCoder {
 	/**
 	 * Abstract syntax tree of the expression to be evaluated.
 	 */
-	private ASTNode funcDef;
+	private AstNode funcDef;
 	
 	/**
 	 * The libSBML object of the model entity this coder represents. 
 	 */
-	private SBase ref_obj;
+	private SbmlBase ref_obj;
 	
 	/**
 	 * Prefix to be used when generating a FORTRAN variable name.
@@ -41,7 +40,7 @@ class EvalCoder extends FortranCoder {
 	 * @param onlyconc whether quantities of species must be transformed to
 	 * concentrations if amounts are given
 	 */
-	public EvalCoder(SBase obj, ASTNode function, String prefix, boolean
+	public EvalCoder(SbmlBase obj, AstNode function, String prefix, boolean
 			onlyconc, SbmlCompiler compiler) {
 		super(compiler);
 		ref_obj = obj;
@@ -54,7 +53,7 @@ class EvalCoder extends FortranCoder {
 			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
 		String name = getVarName();
 		target.declareVar(name);
-		String formula = getFormula(funcDef, bindings, libsbml.AST_UNKNOWN);
+		String formula = getFormula(funcDef, bindings, NodeType.AST_UNKNOWN);
 		String assignment = name + " = " + formula;
 		target.appendStatement(assignment);
 	}
@@ -64,7 +63,7 @@ class EvalCoder extends FortranCoder {
 		findInnerDepends(funcDef, bindings, 0);
 	}
 	
-	public SBase getSbmlNode() { return ref_obj; }
+	public SbmlBase getSbmlNode() { return ref_obj; }
 
 	String getPrefix() { return my_prefix; }
 }

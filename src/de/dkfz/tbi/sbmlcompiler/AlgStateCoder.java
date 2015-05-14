@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.sbml.libsbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
 
 /**
  * Implements the calculation of the residual of an algebraic equation, and
@@ -20,7 +21,7 @@ class AlgStateCoder extends StateVariable {
 	 * Right-hand side of the algebraic equation this algebraic state was
 	 * assigned to.
 	 */
-	private ASTNode my_algeq;
+	private AstNode my_algeq;
 	
 	/**
 	 * Set of variable names found in this algebraic equation. {@link
@@ -45,8 +46,8 @@ class AlgStateCoder extends StateVariable {
 	 * Identifies candidates for the role of the algebraic state variable,
 	 * recursively.
 	 */
-	private void findStateCandidates(ASTNode root) {
-		if ((root.isName()) && (root.getType() != libsbml.AST_NAME_TIME)) {
+	private void findStateCandidates(AstNode root) {
+		if ((root.isName()) && (root.getType() != NodeType.AST_NAME_TIME)) {
 			if (! root.isFunction()) {
 				candidates.add(root.getName());
 			}
@@ -61,7 +62,7 @@ class AlgStateCoder extends StateVariable {
 	/**
 	 * @param algeq right-hand side of the algebraic equation
 	 */
-	AlgStateCoder(ASTNode algeq, SbmlCompiler compiler) {
+	AlgStateCoder(AstNode algeq, SbmlCompiler compiler) {
 		super(compiler);
 		my_algeq = algeq;
 		findStateCandidates(my_algeq);
@@ -70,7 +71,7 @@ class AlgStateCoder extends StateVariable {
 	void putFortranCode(FortranFunction target,
 			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
 		String code = "g(" + getId() + ") = ";
-		code += getFormula(my_algeq, bindings, libsbml.AST_UNKNOWN);
+		code += getFormula(my_algeq, bindings, NodeType.AST_UNKNOWN);
 		target.appendStatement(code);
 	}
 	
@@ -80,7 +81,7 @@ class AlgStateCoder extends StateVariable {
 		findInnerDepends(my_algeq, bindings, 0);
 	}
 	
-	public SBase getSbmlNode() { return null; }
+	public SbmlBase getSbmlNode() { return null; }
 
 	String getPrefix() { return "xa"; }
 

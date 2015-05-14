@@ -51,11 +51,9 @@ public class ModelReaderTest {
 				}
 			}
 			assertTrue(did_rescope_k6);
-			ArrayList<Rule> rules = model.getRules();
-			Iterator<Rule> rule_it = rules.iterator();
 			Rule ct_rule = null; 
-			while (rule_it.hasNext()) {
-				Rule rule = rule_it.next();
+			for (int k = 0; k < model.getNumRules(); k ++) {
+				Rule rule = model.getRule(k);
 				if (rule.getVariable().getId().equals("CT")) {
 					ct_rule = rule;
 				}

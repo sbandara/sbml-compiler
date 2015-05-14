@@ -3,7 +3,8 @@ package de.dkfz.tbi.sbmlcompiler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import org.sbml.libsbml.SBase;
+
+import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 class PlotCoder extends FortranCoder {
 	
@@ -40,7 +41,7 @@ class PlotCoder extends FortranCoder {
 
 	String getPrefix() { return "plot"; }
 
-	public SBase getSbmlNode() { return null; }
+	public SbmlBase getSbmlNode() { return null; }
 
 	protected void initialize(Map<String, FortranCoder> bindings)
 			throws SbmlCompilerException {

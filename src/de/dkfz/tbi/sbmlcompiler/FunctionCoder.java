@@ -3,9 +3,9 @@ package de.dkfz.tbi.sbmlcompiler;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sbml.libsbml.ASTNode;
-import org.sbml.libsbml.SBase;
-import org.sbml.libsbml.libsbml;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode;
+import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
+import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 /**
  * Evaluates a function call. The use of ADIFOR for differentiation of
@@ -20,13 +20,13 @@ final class FunctionCoder extends FortranCoder {
 	/**
 	 * Holds the abstract syntax tree of the function definition.
 	 */
-	private ASTNode root;
+	private AstNode root;
 	
 	/**
 	 * Holds the arguments of the function call. An argument of a function
 	 * call can be a composite.
 	 */
-	private ASTNode args[];
+	private AstNode args[];
 	
 	/**
 	 * Knows the mathematical FORTRAN expression that must replace the name
@@ -48,10 +48,10 @@ final class FunctionCoder extends FortranCoder {
 	 * @param onlyconc whether the quantity of species contained in function
 	 * arguments must be transformed to concentrations if amounts are given  
 	 */
-	FunctionCoder(ASTNode lambda, ASTNode call, boolean onlyconc, SbmlCompiler
+	FunctionCoder(AstNode lambda, AstNode call, boolean onlyconc, SbmlCompiler
 			compiler) {
 		super(compiler);
-		args = new ASTNode[(int)call.getNumChildren()];
+		args = new AstNode[(int)call.getNumChildren()];
 		for (int i = 0; i < args.length; i ++) {
 			args[i] = call.getChild(i);
 		}
@@ -82,7 +82,7 @@ final class FunctionCoder extends FortranCoder {
 				onlyConc = false;
 			}
 			else if (args[i].isNumber()) {
-				arg_symbol = Double.toString(args[i].getReal());
+				arg_symbol = args[i].getNumber().toString();
 			}
 			else throw new InternalError();
 			argSymbols.put(root.getChild(i).getName(), arg_symbol);
@@ -111,12 +111,12 @@ final class FunctionCoder extends FortranCoder {
 			throws SbmlCompilerException {
 		String varname = this.getVarName();
 		target.declareVar(varname);
-		ASTNode fn_body = root.getChild(root.getNumChildren() - 1);
+		AstNode fn_body = root.getChild(root.getNumChildren() - 1);
 		target.appendStatement(varname + " = " + getFormula(fn_body,
-				bindings, libsbml.AST_UNKNOWN));
+				bindings, NodeType.AST_UNKNOWN));
 	}
 
 	String getPrefix() { return "fn"; }
 
-	public SBase getSbmlNode() { return null; }
+	public SbmlBase getSbmlNode() { return null; }
 }

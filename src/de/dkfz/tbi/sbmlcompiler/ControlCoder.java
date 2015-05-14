@@ -2,7 +2,7 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.Map;
 
-import org.sbml.libsbml.SBase;
+import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 /**
  * Implements a reference to an optimal control by assigning its value to a
@@ -15,7 +15,7 @@ class ControlCoder extends FortranCoder {
 	/**
 	 * The libSBML object of the model entity this coder implements.
 	 */
-	private SBase refObj;
+	private SbmlBase refObj;
 	
 	public final static byte CONSTANT = 1, PW_CONSTANT = 2;
 	
@@ -26,9 +26,9 @@ class ControlCoder extends FortranCoder {
 	 * @param scale scaling factor to be applied to this item of the array
 	 * of controls
 	 */
-	public ControlCoder(SBase param, byte discretize, SbmlCompiler compiler) {
+	public ControlCoder(SbmlBase obj, byte discretize, SbmlCompiler compiler) {
 		super(compiler);
-		refObj = param;
+		refObj = obj;
 		this.discretize = discretize;
 	}
 	
@@ -52,7 +52,7 @@ class ControlCoder extends FortranCoder {
 	
 	protected void initialize(Map<String, FortranCoder> bindings) { }
 	
-	public SBase getSbmlNode() { return refObj; }
+	public SbmlBase getSbmlNode() { return refObj; }
 
 	String getPrefix() {
 		if (discretize == CONSTANT) { 

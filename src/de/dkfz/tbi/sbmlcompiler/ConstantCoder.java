@@ -1,7 +1,11 @@
 package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.Map;
-import org.sbml.libsbml.*;
+
+import de.dkfz.tbi.sbmlcompiler.sbml.Compartment;
+import de.dkfz.tbi.sbmlcompiler.sbml.Parameter;
+import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
+import de.dkfz.tbi.sbmlcompiler.sbml.Species;
 
 /**
  * Implements a FORTRAN constant. Offering the keyword PARAMETER, FORTRAN
@@ -16,7 +20,7 @@ class ConstantCoder extends FortranCoder {
 	/**
 	 * The libSBML object of the model entity this coder represents. 
 	 */
-	private SBase ref_obj = null;
+	private SbmlBase ref_obj = null;
 	
 	/**
 	 * Value of the constant.
@@ -26,28 +30,28 @@ class ConstantCoder extends FortranCoder {
 	/**
 	 * @param obj libSBML object of the model entity this coder represents
 	 */
-	public ConstantCoder(SBase obj, SbmlCompiler compiler) {
+	public ConstantCoder(SbmlBase obj, SbmlCompiler compiler) {
 		super(compiler);
 		ref_obj = obj;
 		if (ref_obj instanceof Compartment) {
-			Compartment compartment = (Compartment)ref_obj;
-			if (compartment.isSetVolume()) {
-				my_value = compartment.getVolume();
+			Compartment compartment = (Compartment) ref_obj;
+			if (compartment.getSize() != null) {
+				my_value = compartment.getSize();
 			}
 			else my_value = 1;
 		}
 		else if (ref_obj instanceof Species) {
-			Species species = (Species)ref_obj;
-			if (species.isSetInitialConcentration()) {
+			Species species = (Species) ref_obj;
+			if (species.getInitialConcentration() != null) {
 				my_value = species.getInitialConcentration();
 			}
-			else if (species.isSetInitialAmount()) {
+			else if (species.getInitialAmount() != null) {
 				my_value = species.getInitialAmount();
 			}
 		}
 		else if (ref_obj instanceof Parameter) {
-			Parameter param = (Parameter)ref_obj;
-			if (param.isSetValue()) {
+			Parameter param = (Parameter) ref_obj;
+			if (param.getValue() != null) {
 				my_value = param.getValue();
 			}
 		}
@@ -76,7 +80,7 @@ class ConstantCoder extends FortranCoder {
 	
 	protected void initialize(Map<String, FortranCoder> bindings) { }
 	
-	public SBase getSbmlNode() { return ref_obj; }
+	public SbmlBase getSbmlNode() { return ref_obj; }
 
 	String getPrefix() { return "const"; }
 }

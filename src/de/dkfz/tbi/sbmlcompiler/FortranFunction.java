@@ -101,7 +101,7 @@ public final class FortranFunction {
  		for (int i = 0; i < items.size(); i ++) {
  			String item = (String)items.get(i);
  			int len_item = item.length();
-     		if (colPos + len_item + 3 > SbmlCompiler.wrapLine) {
+     		if (colPos + len_item + 3 > SbmlCompiler.WRAP_LINE) {
      			if (i > 0) {
      				code += ',';
      			}
@@ -133,10 +133,10 @@ public final class FortranFunction {
  	
  	private void appendStmt(String statement, String margin) {
  		String line = margin + statement;
- 		while (line.length() > SbmlCompiler.wrapLine) {
- 			int p = line.lastIndexOf(' ', SbmlCompiler.wrapLine);
+ 		while (line.length() > SbmlCompiler.WRAP_LINE) {
+ 			int p = line.lastIndexOf(' ', SbmlCompiler.WRAP_LINE);
  			if (p == 9) {
- 				p = line.indexOf(' ', SbmlCompiler.wrapLine + 1);
+ 				p = line.indexOf(' ', SbmlCompiler.WRAP_LINE + 1);
  				if (p == -1) {
  					bodyBlock += line + '\n';
  					return;
