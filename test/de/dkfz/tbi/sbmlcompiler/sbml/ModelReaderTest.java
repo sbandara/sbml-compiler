@@ -40,17 +40,6 @@ public class ModelReaderTest {
 			assertEquals(c2_ref.getRefType(), ReferenceType.PRODUCT);
 			AstNode kinetic_law = r1.getKineticLaw();
 			assertEquals(kinetic_law.getType(), NodeType.AST_TIMES);
-			assertEquals(kinetic_law.getNumChildren(), 3);
-			boolean did_rescope_k6 = false;
-			String scoped_name = r1.getId() + ":k6";
-			for (int k = 0; k < kinetic_law.getNumChildren(); k ++) {
-				AstNode child = kinetic_law.getChild(k);
-				if (child.getName().equals(scoped_name)) {
-					did_rescope_k6 = true;
-					break;
-				}
-			}
-			assertTrue(did_rescope_k6);
 			Rule ct_rule = null; 
 			for (int k = 0; k < model.getNumRules(); k ++) {
 				Rule rule = model.getRule(k);
@@ -61,7 +50,6 @@ public class ModelReaderTest {
 			assertEquals(ct_rule.getType(), RuleType.ASSIGNMENT);
 			AstNode expression = ct_rule.getExpression();
 			assertEquals(expression.getType(), NodeType.AST_PLUS);
-			assertEquals(expression.getNumChildren(), 4);
 		}
 		finally {
 			try {
