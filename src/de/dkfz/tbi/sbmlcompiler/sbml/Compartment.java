@@ -30,7 +30,7 @@ public class Compartment extends SbmlBase {
 	public int getSpatialDimentsions() { return spatial_dimensions; }
 	
 	public Double getSize() { return size; }
-
+	
 	public String getUnits() { return units; }
 	
 	public Compartment getOutside() throws SbmlCompilerException {

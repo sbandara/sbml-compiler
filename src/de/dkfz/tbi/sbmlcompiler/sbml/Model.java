@@ -2,6 +2,7 @@ package de.dkfz.tbi.sbmlcompiler.sbml;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -15,11 +16,11 @@ public class Model extends SbmlBase {
 		super(atts);
 	}
 	
-	public SbmlBase getEntity(String id) {
-		return entities.get(id);
-	}
+	public SbmlBase getEntity(String id) { return entities.get(id); }
 	
-	public ArrayList<Rule> getRules() {
-		return new ArrayList<Rule>(rules);
-	}
+	public Set<String> getEntityIds() { return entities.keySet(); }
+	
+	public Rule getRule(int index) { return rules.get(index); }
+	
+	public int getNumRules() { return rules.size(); }
 }

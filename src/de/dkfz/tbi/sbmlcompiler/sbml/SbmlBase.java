@@ -3,7 +3,7 @@ package de.dkfz.tbi.sbmlcompiler.sbml;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-public class SbmlBase {
+public abstract class SbmlBase {
 
 	String name = null;
 	String id = null;
@@ -37,4 +37,6 @@ public class SbmlBase {
 		}
 		return null;
 	}
+	
+	public boolean isConstant() { return false; }
 }

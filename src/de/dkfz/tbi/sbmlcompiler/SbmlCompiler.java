@@ -17,262 +17,59 @@
 
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.*;
-import org.sbml.libsbml.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+
+import static de.dkfz.tbi.sbmlcompiler.SbmlCompilerException.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.*;
+import de.dkfz.tbi.sbmlcompiler.sbml.Rule.RuleType;
 
 final public class SbmlCompiler {
 	
 	public final static int FFCN = 0, GFCN = 1, PLOTFCN = 2, MFCN1 = 3;
-	
-	/**
-	 * Maximum number of characters in a line of FORTRAN code. If the number of
-	 * characters exceeds <code>wrapLine</code>, the line is wrapped at the
-	 * previous blank character. 
-	 */
-	public static final int wrapLine = 72;
-	
-	/**
-	 * Number of differential states to be used for implementing a time-delayer
-	 * tube.
-	 */
-	public static final int delaySteps = 5;
+	public static final int WRAP_LINE = 72, DELAY_STEPS = 5;
     
-	/**
-     * Dependency model of the <i>in vivo</i> situation. This dependency model
-     * is created by the constructor of <code>SbmlCompiler</coder> while reading
-     * an SBML file.
-     */
-    private Map<String, FortranCoder> inVivoBindings = new HashMap<String,
+    private HashMap<String, FortranCoder> def_bindings = new HashMap<String,
     		FortranCoder>();
+    private Model model;
     
-    /**
-     * The libSBML representation of the SBML model.
-     */
-    Model model;
-    
-    Model getModel() { return model; }
-    
-    /**
-     * The libSBML reader used for loading the SBML file.
-     */
-    private SBMLReader reader;
-    
-    /**
-     * The libSBML representation of the SBML file.
-     */
-    private SBMLDocument document;
-
-    /**
-     * Map from species to the reactions the species is involved in.
-     */
-    private HashMap<String, ArrayList<String>> reactome = new HashMap<String,
-    		ArrayList<String>>();
-    
-    private void addToReactome(ListOf listOfSpecies, String reaction) {
-		for (int k = 0; k < listOfSpecies.size(); k ++) {
-			String species;
-			SBase spec_ref = listOfSpecies.get(k); 
-			species = ((SimpleSpeciesReference)spec_ref).getSpecies();
-			if (! inVivoBindings.containsKey(species)) {
-				ArrayList<String> reactions;
-				if (reactome.containsKey(species)) {
-					reactions = reactome.get(species);
-				}
-				else {
-					reactions = new ArrayList<String>();
-					reactome.put(species, reactions);
-				}
-				reactions.add(reaction);
-			}
-		}
+    private ArrayList<AlgStateCoder> readRules() throws SbmlCompilerException {
+    	final int n_rules = model.getNumRules();
+    	ArrayList<AlgStateCoder> alg_eqns = new ArrayList<AlgStateCoder>();
+    	for (int k = 0; k < n_rules; k ++) {
+    		Rule rule = model.getRule(k);
+    		if (rule.getType() == RuleType.ALGEBRAIC_RULE) {
+    			alg_eqns.add(new AlgStateCoder(rule.getExpression(), this));
+    		}
+    		else {
+    			SbmlBase object = rule.getVariable();
+    			FortranCoder coder = null;
+    			if (rule.getType() == RuleType.ASSIGNMENT) {
+    				coder = new EvalCoder(object, rule.getExpression(), "asgn",
+    						false, this);
+    			}
+    			else if (rule.getType() == RuleType.RATE_RULE) {
+    				coder = new DiffStateCoder(object, rule.getExpression(),
+    						this);
+    			}
+				def_bindings.put(object.getId(), coder);
+    		}
+    	}
+    	return alg_eqns;
     }
     
-	/**
-     * Builds the in vivo dependency model {@link SbmlCompiler#inVivoBindings}
-     * from an SBML string or file. For each entity of the model, the correct
-     * specialization of {@link FortranCoder} is identified and instantiated.
-     * Each instance is put to the <code>inVivoBindings</code> map with the
-     * <code>id</code> of the SBML entity it is coding for, serving as key.
-     * @param sbml either an SBML string or a full file name of an SBML file
-     * @param fromString wether <code>sbml</code> is an SBML string
-     */
-    public SbmlCompiler(String sbml, boolean fromString) throws
-    		SbmlCompilerException {
-
-    	System.loadLibrary("sbmlj");
-    	
-    	/* Makes libSBML read the model file sbml_file. If something goes wrong
-    	 * an SbmlCompilerException CANNOT_READ_SBML is thrown.
-    	 */
-    	reader = new SBMLReader();
-    	if (fromString) {
-    		document = reader.readSBMLFromString(sbml);
-    	}
-    	else {
-    		document = reader.readSBML(sbml);
-    	}
-		try {
-			model = document.getModel();
-    	}
-    	catch (Exception e) {
-    		throw new SbmlCompilerException(SbmlCompilerException
-    				.CANNOT_READ_SBML, e);
-    	}
-    	
-    	/* Walks the list of rules. Algebraic rules are stored in an ArrayList
-    	 * for identifying algebraic states after other kinds of determination
-    	 * have been checked. Assignment rules are implemented using EvalCoder.
-    	 * For rate rules, DiffStateCoder is used.
-    	 */
-		ListOf listOfRules = model.getListOfRules();
-		ArrayList<AlgStateCoder> algebraicEquations =
-				new ArrayList<AlgStateCoder>();
-		for (int i = 0; i < listOfRules.size(); i ++) {
-			Rule rule = (Rule)listOfRules.get(i);
-			if (rule instanceof AlgebraicRule) {
-				algebraicEquations.add(new AlgStateCoder(rule.getMath(), this));
-			}
-			else {
-				String v_name = null;
-				FortranCoder coder = null;
-				if (rule instanceof AssignmentRule) {
-					v_name = ((AssignmentRule)rule).getVariable();
-				}
-				else {
-					v_name = ((RateRule)rule).getVariable();
-				}
-				SBase ref_obj = model.getSpecies(v_name);
-				if (ref_obj == null) {
-					ref_obj = model.getParameter(v_name);
-				}
-				if (ref_obj == null) {
-					ref_obj = model.getCompartment(v_name);
-				}
-				if (ref_obj == null) {
-					throw new SbmlCompilerException(SbmlCompilerException
-							.UNKNOWN_MODEL_ENTITY, v_name);
-				}
-				ASTNode expr = rule.getMath();
-				if (rule instanceof AssignmentRule) {
-					coder = new EvalCoder(ref_obj, expr, "asgn", false, this);
-				}
-				else {
-					coder = new DiffStateCoder(ref_obj, expr, this);
-				}
-				inVivoBindings.put(v_name, coder);
-			}
-		}
-		
-		/* Walks the list of reactions for finding local parameters and for
-		 * building the model's reactome involving reactants and products. This
-		 * reactome is then used for deriving differential equations for the
-		 * species. This is why modifiers are added to the reactome later, in
-		 * a separate step, as by the definition of an enzyme, for modifiers,
-		 * the reactions they are involved in do not matter.
-		 */
-    	ListOf listOfReactions = model.getListOfReactions();
-		for (int i = 0; i < listOfReactions.size(); i ++) {
-			Reaction reaction = (Reaction)listOfReactions.get(i);
-			ListOf listOfParams=reaction.getKineticLaw().getListOfParameters();
-			for (int k = 0; k < listOfParams.size(); k ++) {
-				Parameter param = (Parameter)listOfParams.get(k);
-				String name = param.getId();
-				ParameterCoder param_coder = new ParameterCoder(param,
-						param.getId(), this);
-				inVivoBindings.put(name, param_coder);
-			}
-	    	String rxn_name = reaction.getId();
-	    	addToReactome(reaction.getListOfReactants(), rxn_name);
-	    	addToReactome(reaction.getListOfProducts(), rxn_name);
-			EvalCoder rxn_coder = new EvalCoder(reaction, reaction
-					.getKineticLaw().getMath(), "rxn", true, this);
-			inVivoBindings.put(rxn_name, rxn_coder);
-		}
-		for (Iterator<String> i = reactome.keySet().iterator(); i.hasNext();) {
-			String spec_name = i.next();
-			Species species = model.getSpecies(spec_name);
-			ArrayList<String> v_rxns = reactome.get(spec_name);
-			String a_rxns[] = new String[v_rxns.size()];
-			for (int k = 0; k < v_rxns.size(); k ++) {
-				a_rxns[k] = (String)v_rxns.get(k);
-			}
-			DiffStateCoder diff_coder = new DiffStateCoder(species, a_rxns,
-					this);
-			inVivoBindings.put(spec_name, diff_coder);
-		}
-		for (int i = 0; i < listOfReactions.size(); i ++) {
-			Reaction reaction = (Reaction)listOfReactions.get(i);
-			addToReactome(reaction.getListOfModifiers(), reaction.getId());
-		}
-		
-		HashSet<String> algebraicVariable = new HashSet<String>();
-		/* Walks the list of global parameters. If the constant field is set to
-		 * true, the parameter cannot be controlled by a rule, but is
-		 * identifiable. If it is not constant and not put to the dependency
-		 * model, already, it is a candidate for an algebraic state.
-		 */
-		ListOf listOfParams = model.getListOfParameters();
-    	for (int i = 0; i < listOfParams.size(); i ++) {
-    		Parameter param = (Parameter)listOfParams.get(i);
-    		String param_name = param.getId();
-    		idFromNameMap.put(param.getName(), param_name);
-    		if (param.getConstant()) {
-				ParameterCoder param_coder = new ParameterCoder(param,
-						param.getName(), this);
-    			inVivoBindings.put(param_name, param_coder);
-    		}
-    		else if (! inVivoBindings.containsKey(param_name)) {
-    			algebraicVariable.add(param_name);
-    		}
-    	}
-		
-    	/* Walks the list of compartments. The same rules apply as for the list
-    	 * of global parameters. The topology of the model is also built here.
-    	 */
-    	ListOf listOfVolumes = model.getListOfCompartments();
-		for (int i = 0; i < listOfVolumes.size(); i ++) {
-			Compartment volume = (Compartment)listOfVolumes.get(i);
-			String vol_name = volume.getId();
-			idFromNameMap.put(volume.getName(), vol_name);
-			if (volume.getConstant()) {
-				ConstantCoder const_coder = new ConstantCoder(volume, this);
-				inVivoBindings.put(vol_name, const_coder);
-			}
-			else if (! inVivoBindings.containsKey(vol_name)) {
-				algebraicVariable.add(vol_name);
-			}
-		}
-		
-    	/* Walks the list of species. The same rules apply as above, but it is
-    	 * important to node that, as the in vivo situation is modeled here, a
-    	 * reaction determation of a species can be overridden by a constant if
-    	 * the species is declared constant.
-    	 */
-		ListOf listOfSpecies = model.getListOfSpecies();
-		for (int i = 0; i < listOfSpecies.size(); i ++) {
-			Species species = (Species)listOfSpecies.get(i);
-			String spec_name = species.getId();
-			idFromNameMap.put(species.getName(), spec_name);
-			if (species.getConstant()) {
-				ConstantCoder const_coder = new ConstantCoder(species, this);
-				inVivoBindings.put(spec_name, const_coder);
-			}
-			else if (! inVivoBindings.containsKey(spec_name)) {
-				algebraicVariable.add(spec_name);
-			}
-		}
-
-		/* Assign algebraic variables to an appropriate algebraic equation. See
-		 * external documentation for details on this algorithm.
-		 */
-		for (int i = 0; i < algebraicEquations.size(); i ++) {
-			AlgStateCoder coder = algebraicEquations.get(i);
+    private void resolveAlgebraics(ArrayList<AlgStateCoder> alg_eqns,
+    		HashSet<String> alg_vars) throws SbmlCompilerException {
+		for (int i = 0; i < alg_eqns.size(); i ++) {
+			AlgStateCoder coder = alg_eqns.get(i);
 			HashSet<String> candidates = coder.getCandidates();
-			candidates.retainAll(algebraicVariable);
-			candidates.removeAll(inVivoBindings.keySet());
+			candidates.retainAll(alg_vars);
+			candidates.removeAll(def_bindings.keySet());
 			if (candidates.isEmpty()) {
-				throw new SbmlCompilerException(SbmlCompilerException
-						.ALGEBRAIC_CONSTRAINT, null);
+				throw new SbmlCompilerException(ALGEBRAIC_CONSTRAINT, null);
 			}
 			Iterator<String> k = candidates.iterator();
 			while (k.hasNext()) {
@@ -282,9 +79,8 @@ final public class SbmlCompiler {
 					remove = true;
 				}
 				boolean found = false;
-				for (int n = i + 1; n < algebraicEquations.size(); n ++) {
-					AlgStateCoder other = algebraicEquations
-							.get(n);
+				for (int n = i + 1; n < alg_eqns.size(); n ++) {
+					AlgStateCoder other = alg_eqns.get(n);
 					HashSet<String> others_candidates = other.getCandidates();
 					if (others_candidates.contains(candidate)) {
 						if (remove == true) {
@@ -294,32 +90,80 @@ final public class SbmlCompiler {
 					}
 				}
 				if ((! found) || (remove)) {
-					inVivoBindings.put(candidate, coder);
-					algebraicVariable.remove(candidate);
+					def_bindings.put(candidate, coder);
+					alg_vars.remove(candidate);
 					break;
 				}
 			}
 		}
-		if (! algebraicVariable.isEmpty()) {
-			throw new SbmlCompilerException(SbmlCompilerException
-					.UNDEFINED_VOLATILE, algebraicVariable);
+		if (! alg_vars.isEmpty()) {
+			throw new SbmlCompilerException(UNDEFINED_VOLATILE, alg_vars);
 		}
-		
-		/* Adds pi and e which are constants defined by the SBML standard. As
-		 * with all members of a dependency model, pi or e are included to the
-		 * FORTRAN code, only, if they satisfy a dependency.
-		 */
-		if (! inVivoBindings.containsKey("pi")) {
-    		inVivoBindings.put("pi", new ConstantCoder(3.14159, this));
+    }
+    
+    public SbmlCompiler(InputStream is) throws SbmlCompilerException {
+    	ModelParser parser = new ModelParser();
+    	try {
+    		model = parser.parse(is);
     	}
-    	if (! inVivoBindings.containsKey("exponentiale")) {
-    		inVivoBindings.put("e", new ConstantCoder(2.71828, this));
+    	catch (Exception e) {
+    		throw new SbmlCompilerException(CANNOT_READ_SBML, e);
     	}
+		ArrayList<AlgStateCoder> alg_eqns = readRules();
+    	HashSet<String> alg_vars = new HashSet<String>();
+    	Iterator<String> it = model.getEntityIds().iterator();
+    	while (it.hasNext()) {
+    		String obj_id = it.next();
+    		if (def_bindings.containsKey(obj_id)) {
+    			continue;
+    		}
+       		SbmlBase object = model.getEntity(obj_id);
+    		if (object.isConstant()) {
+    			FortranCoder coder = null;
+    			if (object instanceof Parameter) {
+    				coder = new ParameterCoder(object, obj_id, this);
+    			}
+    			else {
+    				coder = new ConstantCoder(object, this);
+    			}
+				def_bindings.put(obj_id, coder);
+    		}
+    		else if (object instanceof Species) {
+    			String[] rxns = model.getEntityIds().stream().map(r -> model
+    					.getEntity(r)).filter(r -> r instanceof Reaction)
+    					.map(r -> r.getId()).toArray(size -> new String[size]);
+    			if (rxns.length == 0) {
+    				alg_vars.add(obj_id);
+    			}
+    			else {
+    				def_bindings.put(obj_id, new DiffStateCoder(object, rxns,
+    						this));
+    			}
+    		}
+    		else if (object instanceof Reaction) {
+    			def_bindings.put(obj_id, new EvalCoder(object, ((Reaction)
+    					object).getKineticLaw(), "rxn", true, this));
+    		}
+    		else if ((object instanceof Parameter) || (object instanceof
+    				Compartment)) {
+    			alg_vars.add(obj_id);
+    		}
+    	}
+		if (! def_bindings.containsKey("pi")) {
+    		def_bindings.put("pi", new ConstantCoder(3.14159, this));
+    	}
+    	if (! def_bindings.containsKey("exponentiale")) {
+    		def_bindings.put("exponentiale", new ConstantCoder(2.71828, this));
+    	}
+		resolveAlgebraics(alg_eqns, alg_vars);
     }
 
-    public Map<String, FortranCoder> getInVivoBindings() {
-    	Map<String, FortranCoder> clone = new HashMap<String, FortranCoder>();
-    	clone.putAll(inVivoBindings);
+    public Model getModel() { return model; }
+
+    public HashMap<String, FortranCoder> getDefaultBindings() {
+    	HashMap<String, FortranCoder> clone = new HashMap<String,
+    			FortranCoder>();
+    	clone.putAll(def_bindings);
     	return clone;
     }
 
@@ -335,7 +179,7 @@ final public class SbmlCompiler {
      * @throws SbmlCompilerException
      */
     private void visitDependents(FortranCoder parent,
-    		Map<String, FortranCoder> bindings, FortranFunction target,
+    		HashMap<String, FortranCoder> bindings, FortranFunction target,
     		int visitor) throws SbmlCompilerException {
     	HashSet<String> dependents = parent.getCodeDependencies();
     	parent.goodbye(visitor);
@@ -373,8 +217,8 @@ final public class SbmlCompiler {
      * the caller
      * @throws SbmlCompilerException
      */
-    public ArrayList<FortranFunction> compile(Map<String, FortranCoder>
-    		bindings, String prefix, Set<String> mfcns) throws
+    public ArrayList<FortranFunction> compile(HashMap<String, FortranCoder>
+    		bindings, String prefix, HashSet<String> mfcns) throws
     		SbmlCompilerException {
     	
     	ArrayList<FortranFunction> fn = new ArrayList<FortranFunction>();
@@ -397,7 +241,7 @@ final public class SbmlCompiler {
 			mfcn.outputs.add(h_coder);
 			fn.add(mfcn);
 		}
-		Set<FortranCoder> entry = new HashSet<FortranCoder>();
+		HashSet<FortranCoder> entry = new HashSet<FortranCoder>();
  		for (int fn_id = 0; fn_id < fn.size(); fn_id ++) {
  			FortranFunction target = fn.get(fn_id);	
  			for (Iterator<FortranCoder> k = target.outputs.iterator();
@@ -418,7 +262,8 @@ final public class SbmlCompiler {
     	return fn;
     }
     
-    private Map<String, String> idFromNameMap = new HashMap<String, String>();
+    private HashMap<String, String> idFromNameMap = new HashMap<String,
+    		String>();
  
 	/**
 	 * Contains the prefixes as keys and <code>Integers</code> for counting
@@ -434,13 +279,13 @@ final public class SbmlCompiler {
 	 * and incremented by one.
 	 */
 	int makeId(String prefix) {
-			int id;
-			if (sequence.containsKey(prefix)) {
-				id = sequence.get(prefix).intValue() + 1;
-			}
-			else {
-				id = 1;
-			}
+		int id;
+		if (sequence.containsKey(prefix)) {
+			id = sequence.get(prefix).intValue() + 1;
+		}
+		else {
+			id = 1;
+		}
 		sequence.put(prefix, new Integer(id));
 		return id;
 	}
@@ -462,26 +307,4 @@ final public class SbmlCompiler {
     public String getIdFromName(String name) {
     	return idFromNameMap.get(name);
     }
-    
-	/*
-	private static final String usageText = "usage: sbmlcompiler SBMLFILE.XML";
-
-	public static void main(String[] args) {
-		if (args.length != 1) {
-			System.out.println(usageText);
-			return;
-		}
-		String sbml_file = args[0];
-		try {
-			SbmlCompiler cmplr = new SbmlCompiler(sbml_file, false);
-			Map<String, FortranCoder> bnds = cmplr.getInVivoBindings();
-			ArrayList<FortranFunction> fn = cmplr.compile(bnds, "",
-					new HashSet<String>());
-			System.out.println(fn.get(0).toString());
-		}
-		catch (SbmlCompilerException e) {
-			System.out.println(e.getMessage());
-		}
-	}
-	*/
 }

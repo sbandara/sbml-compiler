@@ -105,7 +105,7 @@ class MathReader extends StackedHandler {
 		AstNode child = null;
 		switch (tag) {
 		case SEP:
-			if (text == null) { 
+			if (text == null) {
 				throw new SAXException("Found separator outside of <cn>-tag.");
 			}
 			else {

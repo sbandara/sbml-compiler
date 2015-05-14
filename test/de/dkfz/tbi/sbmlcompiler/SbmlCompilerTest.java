@@ -2,9 +2,11 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,14 +17,26 @@ public class SbmlCompilerTest {
 	
 	@BeforeClass
 	public static void setUp() {
-    	System.loadLibrary("sbmlj");
+    	// System.loadLibrary("sbmlj");
 	}
+
+	private static final String TYSON_FILE = "/Tyson1991-L2V1.xml",
+			MITCHELL_FILE = "/Mitchell2013-L2V1.xml";
 
 	@Test
 	public void testTyson1991() throws SbmlCompilerException {
-		SbmlCompiler cmplr = new SbmlCompiler("/Users/svb6/Tyson1991-L2V1.xml",
-				false);
-		Map<String, FortranCoder> bnds = cmplr.getInVivoBindings();
+		InputStream is = this.getClass().getResourceAsStream(TYSON_FILE);
+		SbmlCompiler cmplr;
+		try {
+			cmplr = new SbmlCompiler(is);
+		}
+		finally {
+			try {
+				is.close();
+			}
+			catch (IOException e) { }
+		}
+		HashMap<String, FortranCoder> bnds = cmplr.getDefaultBindings();
 		ArrayList<FortranFunction> fn = cmplr.compile(bnds, "",
 				new HashSet<String>());
 		String code = fn.get(0).toString();
