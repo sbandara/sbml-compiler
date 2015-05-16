@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 /**
@@ -34,15 +32,15 @@ class ParameterCoder extends FortranCoder {
 		paramName = name;
 	}
 	
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String stmt = getVarName();
 		target.declareVar(stmt);
 		stmt += " = $" + paramName + "$";
 		target.appendStatement(stmt);
 	}
 	
-	protected void initialize(Map<String, FortranCoder> bindings) { }
+	protected void initialize(Bindings bindings) { }
 	
 	public SbmlBase getSbmlNode() { return refObj; }
 

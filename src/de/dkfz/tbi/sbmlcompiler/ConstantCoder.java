@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 import de.dkfz.tbi.sbmlcompiler.sbml.Compartment;
 import de.dkfz.tbi.sbmlcompiler.sbml.Parameter;
 import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
@@ -71,14 +69,14 @@ class ConstantCoder extends FortranCoder {
    	 */
 	double getValue() { return my_value; }
 	
-	void putFortranCode(FortranFunction target, Map<String,
-			FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String name = getVarName();
 		target.declareVar(name);
 		target.defineConst(name + " = " + Double.toString(my_value));
 	}
 	
-	protected void initialize(Map<String, FortranCoder> bindings) { }
+	protected void initialize(Bindings bindings) { }
 	
 	public SbmlBase getSbmlNode() { return ref_obj; }
 

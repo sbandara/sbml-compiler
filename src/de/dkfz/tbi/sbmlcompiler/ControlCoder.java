@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
 /**
@@ -32,8 +30,8 @@ class ControlCoder extends FortranCoder {
 		this.discretize = discretize;
 	}
 	
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String var = getVarName();
 		target.declareVar(var);
 		switch(discretize) {
@@ -50,7 +48,7 @@ class ControlCoder extends FortranCoder {
 		}
 	}
 	
-	protected void initialize(Map<String, FortranCoder> bindings) { }
+	protected void initialize(Bindings bindings) { }
 	
 	public SbmlBase getSbmlNode() { return refObj; }
 

@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 import de.dkfz.tbi.sbmlcompiler.sbml.*;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
 
@@ -49,8 +47,8 @@ class EvalCoder extends FortranCoder {
 		onlyConc = onlyconc;
 	}
 	
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String name = getVarName();
 		target.declareVar(name);
 		String formula = getFormula(funcDef, bindings, NodeType.AST_UNKNOWN);
@@ -58,8 +56,7 @@ class EvalCoder extends FortranCoder {
 		target.appendStatement(assignment);
 	}
 
-	protected void initialize(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		findInnerDepends(funcDef, bindings, 0);
 	}
 	

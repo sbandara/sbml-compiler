@@ -29,8 +29,8 @@ public class SbmlCompilerTest {
 			}
 			catch (IOException e) { }
 		}
-		HashMap<String, FortranCoder> bnds = cmplr.getDefaultBindings();
-		ArrayList<FortranFunction> fn = cmplr.compile(bnds, "",
+		Bindings bindings = cmplr.getDefaultBindings();
+		ArrayList<FortranFunction> fn = cmplr.compile(bindings, "",
 				new HashSet<String>());
 		String code = fn.get(0).toString();
 		HashSet<String> params = new HashSet<String>();

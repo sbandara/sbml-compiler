@@ -3,7 +3,6 @@ package de.dkfz.tbi.sbmlcompiler;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 
 import de.dkfz.tbi.sbmlcompiler.sbml.*;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
@@ -140,8 +139,8 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	abstract void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException;
+	abstract void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException;
 	
 	/**
 	 * Finds a name for this coder, invokes <code>initialize</code> on this
@@ -161,8 +160,7 @@ public abstract class FortranCoder {
 	 * variable index from
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	final void init(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	final void init(Bindings bindings) throws SbmlCompilerException {
 		String prefix = getPrefix();
 		id = compiler.makeId(prefix);
 		varName = prefix + id;
@@ -199,7 +197,7 @@ public abstract class FortranCoder {
 	 * variable index from
 	 * @throws SbmlCompilerException
 	 */
-	protected abstract void initialize(Map<String, FortranCoder> bindings)
+	protected abstract void initialize(Bindings bindings)
 			throws SbmlCompilerException;
 	
 	/**
@@ -221,8 +219,8 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @param j 
 	 */
-	final void findInnerDepends(AstNode root, Map<String,
-			FortranCoder> bindings, int j) throws SbmlCompilerException {
+	final void findInnerDepends(AstNode root, Bindings bindings, int j)
+			throws SbmlCompilerException {
 		NodeType type = root.getType();
 		Model model = compiler.getModel();
 		if ((root.isFunction()) && (type != NodeType.AST_FUNCTION_ROOT) &&
@@ -280,8 +278,8 @@ public abstract class FortranCoder {
 	 * @return FORTRAN variable name or expression for the named dependency
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	protected String getVarName(Map<String, FortranCoder> bindings,
-			String name) throws SbmlCompilerException {
+	protected String getVarName(Bindings bindings, String name)
+			throws SbmlCompilerException {
 		FortranCoder coder = bindings.get(name);
 		String varname = coder.getVarName();
 		if ((! (coder instanceof ControlCoder)) && (onlyConc)) {
@@ -336,8 +334,8 @@ public abstract class FortranCoder {
 	 * @return mathematical expression in FORTRAN syntax
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	protected final String getFormula(AstNode x, Map<String, FortranCoder> b,
-			NodeType outer) throws SbmlCompilerException {
+	protected final String getFormula(AstNode x, Bindings b, NodeType outer)
+			throws SbmlCompilerException {
 		boolean parenthesis = false;
 		String token;
 		int numChildren = x.getNumChildren();
@@ -485,8 +483,7 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of this experiment
 	 * @throws SbmlCompilerException
 	 */
-	void unprepare(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	void unprepare(Bindings bindings) throws SbmlCompilerException {
 		initialized = false;
 		for (Iterator<String> k = depends.iterator(); k.hasNext();) {
 			FortranCoder coder = bindings.get(k.next());
@@ -498,8 +495,7 @@ public abstract class FortranCoder {
 	
 	void registerToFunction(ArrayList<FortranFunction> code) { };
 	
-	String fastPrepare(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	String fastPrepare(Bindings bindings) throws SbmlCompilerException {
 		if (! isInitialized()) {
 			init(bindings);
 		}

@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
 import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
@@ -57,8 +55,8 @@ class TimeDelayCoder extends StateVariable {
 		onlyConc = onlyconc;
 	}
 
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String varname = getVarName();
 		String nByDt = varname + "v";
 		target.declareVar(nByDt);
@@ -74,8 +72,7 @@ class TimeDelayCoder extends StateVariable {
 		target.declareVar(varname);
 	}
 
-	protected void initialize(Map<String, FortranCoder> bindings) throws
-			SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		super.initialize(bindings);
 		findInnerDepends(my_entity, bindings, 0);
 		findInnerDepends(my_delay, bindings, 0);
@@ -90,7 +87,7 @@ class TimeDelayCoder extends StateVariable {
 
 	public SbmlBase getSbmlNode() { return null; }
 
-	void putHeader(FortranFunction target, Map<String, FortranCoder> bindings) {
+	void putHeader(FortranFunction target, Bindings bindings) {
 		target.appendStatement(getVarName() + " = x(" + last_id + ")");
 	}
 

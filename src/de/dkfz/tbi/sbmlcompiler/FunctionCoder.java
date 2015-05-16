@@ -1,7 +1,6 @@
 package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
@@ -64,7 +63,7 @@ final class FunctionCoder extends FortranCoder {
 	 * expressions. Composite arguments are delegated to <code>EvalCoders
 	 * </code>. Simple variables and constants are passed directly.
 	 */
-	protected void initialize(Map<String, FortranCoder> bindings) throws
+	protected void initialize(Bindings bindings) throws
 			SbmlCompilerException {
 		argSymbols = new HashMap<String, String>();
 		for (int i = 0; i < args.length; i ++) {
@@ -93,7 +92,7 @@ final class FunctionCoder extends FortranCoder {
 	 * Replaces argument names by the variable names of delegated tasks or
 	 * simple variables.
 	 */
-	protected String getVarName(Map<String, FortranCoder> bindings, String name) throws
+	protected String getVarName(Bindings bindings, String name) throws
 			SbmlCompilerException {
 		if (argSymbols.containsKey(name)) {
 			String symbol = argSymbols.get(name);
@@ -107,13 +106,13 @@ final class FunctionCoder extends FortranCoder {
 		return super.getVarName(bindings, name);
 	}
 
-	void putFortranCode(FortranFunction target, Map<String, FortranCoder> bindings)
+	void putFortranCode(FortranFunction target, Bindings bindings)
 			throws SbmlCompilerException {
 		String varname = this.getVarName();
 		target.declareVar(varname);
 		AstNode fn_body = root.getChild(root.getNumChildren() - 1);
-		target.appendStatement(varname + " = " + getFormula(fn_body,
-				bindings, NodeType.AST_UNKNOWN));
+		target.appendStatement(varname + " = " + getFormula(fn_body, bindings,
+				NodeType.AST_UNKNOWN));
 	}
 
 	String getPrefix() { return "fn"; }

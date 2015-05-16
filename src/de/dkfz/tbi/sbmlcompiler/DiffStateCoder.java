@@ -2,7 +2,7 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Set;
 
 import de.dkfz.tbi.sbmlcompiler.sbml.*;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
@@ -58,7 +58,7 @@ class DiffStateCoder extends StateVariable {
 		my_diffeq = diffeq;
 	}
 	
-	void putHeader(FortranFunction target, Map<String, FortranCoder> bindings) {
+	void putHeader(FortranFunction target, Bindings bindings) {
 		String name = getVarName();
 		target.declareVar(name);
 		String code = name + " = x(" + getId() + ")";
@@ -75,8 +75,8 @@ class DiffStateCoder extends StateVariable {
 	 * given in concentration units, the resulting amount is divided by the
 	 * volume of the compartment the species is located in.
 	 */
-	void putFortranCode(FortranFunction target, Map<String, FortranCoder>
-			bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String code = "f(" + getId() + ") = ";
 		if (my_reaction != null) {
 			Species species = (Species) ref_obj;
@@ -113,7 +113,8 @@ class DiffStateCoder extends StateVariable {
 				}
 			}
 			if (species.getInitialAmount() == null) {
-				FortranCoder vc = bindings.get(species.getCompartment());
+				FortranCoder vc = bindings.get(species.getCompartment()
+						.getId());
 				if (! ((vc instanceof ConstantCoder) && (((ConstantCoder) vc)
 						.getValue() == 1))) {
 					code += ") / " + vc.getVarName();
@@ -127,12 +128,12 @@ class DiffStateCoder extends StateVariable {
 		target.appendStatement(code);
 	}
 	
-	protected void initialize(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		super.initialize(bindings);
 		if (my_reaction != null) {
+			Set<String> id_set = bindings.getIds();
 			for (int i = 0; i < my_reaction.length; i ++) {
-				if (bindings.containsKey(my_reaction[i])) {
+				if (id_set.contains(my_reaction[i])) {
 					addDepend(my_reaction[i]);
 				}
 			}

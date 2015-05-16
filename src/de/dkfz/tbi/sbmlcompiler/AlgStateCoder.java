@@ -2,7 +2,6 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
 
 import de.dkfz.tbi.sbmlcompiler.sbml.*;
 import de.dkfz.tbi.sbmlcompiler.sbml.AstNode.NodeType;
@@ -68,15 +67,14 @@ class AlgStateCoder extends StateVariable {
 		findStateCandidates(my_algeq);
 	}
 
-	void putFortranCode(FortranFunction target,
-			Map<String, FortranCoder> bindings) throws SbmlCompilerException {
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		String code = "g(" + getId() + ") = ";
 		code += getFormula(my_algeq, bindings, NodeType.AST_UNKNOWN);
 		target.appendStatement(code);
 	}
 	
-	protected void initialize(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		super.initialize(bindings);
 		findInnerDepends(my_algeq, bindings, 0);
 	}
@@ -85,7 +83,7 @@ class AlgStateCoder extends StateVariable {
 
 	String getPrefix() { return "xa"; }
 
-	void putHeader(FortranFunction target, Map<String, FortranCoder>bindings) {
+	void putHeader(FortranFunction target, Bindings bindings) {
 		String name = getVarName();
 		target.declareVar(name);
 		String code = name + " = x(" + (getId() +

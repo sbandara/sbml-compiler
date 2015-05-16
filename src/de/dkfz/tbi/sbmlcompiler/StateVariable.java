@@ -34,8 +34,7 @@ abstract class StateVariable extends FortranCoder {
 	 * Prepares visitor flags for the phase of code generation. This method
 	 * must be invoked explicitly by overriding methods. 
 	 */
-	protected void initialize(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		looped = new boolean[compiler.getVisitFlagCount()];
 	}
 	
@@ -47,8 +46,7 @@ abstract class StateVariable extends FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @param visitor type of target function, must be either FFCN or GFCN
 	 */
-	void closeLoop(FortranFunction target, Map<String, FortranCoder> bindings,
-			int visitor) {
+	void closeLoop(FortranFunction target, Bindings bindings, int visitor) {
 		if (! looped[visitor]) {
 			putHeader(target, bindings);
 		}
@@ -62,8 +60,7 @@ abstract class StateVariable extends FortranCoder {
 	 * @param target target function
 	 * @param bindings dependency model of the experiment
 	 */
-	abstract void putHeader(FortranFunction target,
-			Map<String, FortranCoder> bindings);
+	abstract void putHeader(FortranFunction target, Bindings bindings);
 	
 	/**
 	 * Returns whether this state variable is differential or algebraic.

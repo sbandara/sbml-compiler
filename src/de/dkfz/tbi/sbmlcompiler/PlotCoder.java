@@ -2,7 +2,6 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 
 import de.dkfz.tbi.sbmlcompiler.sbml.SbmlBase;
 
@@ -10,9 +9,8 @@ class PlotCoder extends FortranCoder {
 	
 	ArrayList<String> outputs = new ArrayList<String>();
 	
-	void putFortranCode(FortranFunction target, Map<String, FortranCoder>
-			bindings) throws SbmlCompilerException
-	{
+	void putFortranCode(FortranFunction target, Bindings bindings)
+			throws SbmlCompilerException {
 		int n_var = 0;
     	String write_stmt = "WRITE(10,100) t";
     	for (Iterator<String> i = outputs.iterator(); i.hasNext();)
@@ -43,8 +41,7 @@ class PlotCoder extends FortranCoder {
 
 	public SbmlBase getSbmlNode() { return null; }
 
-	protected void initialize(Map<String, FortranCoder> bindings)
-			throws SbmlCompilerException {
+	protected void initialize(Bindings bindings) throws SbmlCompilerException {
 		for (Iterator<String> k = outputs.iterator(); k.hasNext();) {
 			addDepend(k.next());
 		}

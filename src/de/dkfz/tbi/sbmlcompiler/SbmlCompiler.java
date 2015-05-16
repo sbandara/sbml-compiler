@@ -1,5 +1,5 @@
 /*
- *  SbmlCompiler  Copyright (C) 2005, 2014 Samuel Bandara
+ *  SbmlCompiler  Copyright (C) 2005, 2014-2015 Samuel Bandara
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import static de.dkfz.tbi.sbmlcompiler.SbmlCompilerException.*;
 import de.dkfz.tbi.sbmlcompiler.sbml.*;
@@ -32,8 +33,7 @@ final public class SbmlCompiler {
 	public final static int FFCN = 0, GFCN = 1, PLOTFCN = 2, MFCN1 = 3;
 	public static final int WRAP_LINE = 72, DELAY_STEPS = 5;
     
-    private HashMap<String, FortranCoder> def_bindings = new HashMap<String,
-    		FortranCoder>();
+    private Bindings def_bindings = new Bindings();
     private Model model;
     
     private ArrayList<AlgStateCoder> readRules() throws SbmlCompilerException {
@@ -67,7 +67,7 @@ final public class SbmlCompiler {
 			AlgStateCoder coder = alg_eqns.get(i);
 			HashSet<String> candidates = coder.getCandidates();
 			candidates.retainAll(alg_vars);
-			candidates.removeAll(def_bindings.keySet());
+			candidates.removeAll(def_bindings.getIds());
 			if (candidates.isEmpty()) {
 				throw new SbmlCompilerException(ALGEBRAIC_CONSTRAINT, null);
 			}
@@ -114,7 +114,7 @@ final public class SbmlCompiler {
     	Iterator<String> it = model.getEntityIds().iterator();
     	while (it.hasNext()) {
     		String obj_id = it.next();
-    		if (def_bindings.containsKey(obj_id)) {
+    		if (def_bindings.getIds().contains(obj_id)) {
     			continue;
     		}
        		SbmlBase object = model.getEntity(obj_id);
@@ -149,24 +149,22 @@ final public class SbmlCompiler {
     			alg_vars.add(obj_id);
     		}
     	}
-		if (! def_bindings.containsKey("pi")) {
+    	Set<String> id_set = def_bindings.getIds();
+		if (! id_set.contains("pi")) {
     		def_bindings.put("pi", new ConstantCoder(3.14159, this));
     	}
-    	if (! def_bindings.containsKey("exponentiale")) {
+    	if (! id_set.contains("exponentiale")) {
     		def_bindings.put("exponentiale", new ConstantCoder(2.71828, this));
     	}
 		resolveAlgebraics(alg_eqns, alg_vars);
     }
-
+    
     public Model getModel() { return model; }
-
-    public HashMap<String, FortranCoder> getDefaultBindings() {
-    	HashMap<String, FortranCoder> clone = new HashMap<String,
-    			FortranCoder>();
-    	clone.putAll(def_bindings);
-    	return clone;
+    
+    public Bindings getDefaultBindings() {
+    	return def_bindings.clone();
     }
-
+    
     /**
      * Recursively visits the coders <code>parent</code> depends on, and makes
      * theses put their FORTRAN code to the <code>target</code> function of type
@@ -178,9 +176,8 @@ final public class SbmlCompiler {
      * @param visitor type of the target function
      * @throws SbmlCompilerException
      */
-    private void visitDependents(FortranCoder parent,
-    		HashMap<String, FortranCoder> bindings, FortranFunction target,
-    		int visitor) throws SbmlCompilerException {
+    private void visitDependents(FortranCoder parent, Bindings bindings,
+    		FortranFunction target, int visitor) throws SbmlCompilerException {
     	HashSet<String> dependents = parent.getCodeDependencies();
     	parent.goodbye(visitor);
     	for (Iterator<String> i = dependents.iterator(); i.hasNext();) {
@@ -199,9 +196,7 @@ final public class SbmlCompiler {
     
     private int n_visit_flags = 0;
     
-    int getVisitFlagCount() {
-    	return n_visit_flags;
-    }
+    int getVisitFlagCount() { return n_visit_flags; }
     
     /**
      * Generates FORTRAN code from the dependency model of an experiment.
@@ -217,17 +212,15 @@ final public class SbmlCompiler {
      * the caller
      * @throws SbmlCompilerException
      */
-    public ArrayList<FortranFunction> compile(HashMap<String, FortranCoder>
-    		bindings, String prefix, HashSet<String> mfcns) throws
-    		SbmlCompilerException {
-    	
+    public ArrayList<FortranFunction> compile(Bindings bindings, String prefix,
+    		HashSet<String> mfcns) throws SbmlCompilerException {
     	ArrayList<FortranFunction> fn = new ArrayList<FortranFunction>();
     	fn.add(FFCN, new FortranFunction(prefix + "ffcn", "f"));
     	fn.add(GFCN, new FortranFunction(prefix + "gfcn", "g"));
     	fn.add(PLOTFCN, new  FortranFunction(prefix + "plot",
     			FortranFunction.PLOT));
     	n_visit_flags = 3 + mfcns.size();
-    	for (Iterator<FortranCoder> k = bindings.values().iterator();
+    	for (Iterator<FortranCoder> k = bindings.getCoders().iterator();
     			k.hasNext();) {
     		k.next().registerToFunction(fn);
     	}
@@ -262,18 +255,15 @@ final public class SbmlCompiler {
     	return fn;
     }
     
-    private HashMap<String, String> idFromNameMap = new HashMap<String,
-    		String>();
- 
-	/**
+    /**
 	 * Contains the prefixes as keys and <code>Integers</code> for counting
 	 * as values.
 	 */
 	private HashMap<String, Integer> sequence = new HashMap<String, Integer>();
-
+	
 	/**
 	 * Increments the counter for the given <code>prefix</code> if it
-	 * already exists, or creates one, otherwise. 
+	 * already exists, or creates one, otherwise.
 	 * @param prefix prefix of a FORTRAN variable name
 	 * @return unique number for each <code>prefix</code>, starting from one
 	 * and incremented by one.
@@ -281,30 +271,26 @@ final public class SbmlCompiler {
 	int makeId(String prefix) {
 		int id;
 		if (sequence.containsKey(prefix)) {
-			id = sequence.get(prefix).intValue() + 1;
+			id = sequence.get(prefix) + 1;
 		}
 		else {
 			id = 1;
 		}
-		sequence.put(prefix, new Integer(id));
+		sequence.put(prefix, id);
 		return id;
 	}
 	
 	/**
 	 * Returns the greatest thus last number returned for <code>prefix
 	 * </code>. It is the number of variable names starting with <code>
-	 * prefix</code>. 
+	 * prefix</code>.
 	 * @param prefix prefix of a FORTRAN variable name
 	 * @return number of variable names starting with <code>prefix</code>
 	 */
 	int getGreatestId(String prefix) {
 		if (sequence.containsKey(prefix)) {
-			return sequence.get(prefix).intValue();
+			return sequence.get(prefix);
 		}
 		return 0;
 	}
-    
-    public String getIdFromName(String name) {
-    	return idFromNameMap.get(name);
-    }
 }
