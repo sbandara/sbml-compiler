@@ -197,8 +197,7 @@ public abstract class FortranCoder {
 	 * variable index from
 	 * @throws SbmlCompilerException
 	 */
-	protected abstract void initialize(Bindings bindings)
-			throws SbmlCompilerException;
+	abstract void initialize(Bindings bindings) throws SbmlCompilerException;
 	
 	/**
 	 * @return prefix of the unique FORTRAN variable name to be created for

@@ -1,7 +1,5 @@
 package de.dkfz.tbi.sbmlcompiler;
 
-import java.util.Map;
-
 /**
  * Class of coders that are responsible for a state variable of the FFCN or
  * the GFCN. These coders are not only involved in the calculation of the
@@ -34,7 +32,7 @@ abstract class StateVariable extends FortranCoder {
 	 * Prepares visitor flags for the phase of code generation. This method
 	 * must be invoked explicitly by overriding methods. 
 	 */
-	protected void initialize(Bindings bindings) throws SbmlCompilerException {
+	void initialize(Bindings bindings) throws SbmlCompilerException {
 		looped = new boolean[compiler.getVisitFlagCount()];
 	}
 	
