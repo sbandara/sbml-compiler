@@ -15,7 +15,7 @@ class MathReader extends StackedHandler {
 	private final static String LAMBDA = "lambda", PLUS = "plus", MINUS =
 			"minus", TIMES = "times", DIVIDE = "divide", APPLY = "apply",
 			POWER = "power", CSYMBOL = "csymbol", EXP_E = "exponentiale",
-			PI = "pi", CI = "ci", CN = "cn", SEP = "sep";
+			PI = "pi", CI = "ci", CN = "cn", SEP = "sep", MATH = "math";
 	
 	private final static String SYM_URL = "http://www.sbml.org/sbml/symbols/",
 			SYM_DELAY = "delay", SYM_TIME = "time";
@@ -134,7 +134,8 @@ class MathReader extends StackedHandler {
 			break;
 		}
 		insertNode(child);
-		if ((tag.equals(LAMBDA)) || (tag.equals(APPLY))) {
+		if ((node != null) && (tag.equals(LAMBDA) || tag.equals(APPLY) ||
+				tag.equals(MATH))) {
 			AstNode parent = node.getParent();
 			if (parent == null) {
 				node.reduceToBinary();

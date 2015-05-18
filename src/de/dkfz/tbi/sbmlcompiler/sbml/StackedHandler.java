@@ -63,9 +63,7 @@ abstract class StackedHandler extends DefaultHandler {
 	@Override
 	public final void endElement(String uri, String local, String prefixed)
 			throws SAXException {
-		if (nested > 0) {
-			endElement(local);
-		}
+		endElement(local);
 		if (-- nested == -1) {
 			ContentHandler prev = context.pop();
 			prev.endElement(uri, local, prefixed);
