@@ -75,6 +75,33 @@ public class MathReaderTest implements MathReader.MathContainer {
 		assertTrue(node.isOperator());
 	}
 	
+	@Test
+	public void testFlattenAst() {
+		for (int k = 0; k < 2; k ++) {
+			AstNode a = new AstNode(NodeType.AST_PLUS);
+			a.appendNode(new AstNode(42.0));
+			AstNode b;
+			if (k == 0) {
+				b = new AstNode(NodeType.AST_PLUS);
+			}
+			else {
+				b = new AstNode(NodeType.AST_TIMES);
+			}
+			a.appendNode(b);
+			b.appendNode(new AstNode(4.0));
+			b.appendNode(new AstNode(13.0));
+			a.flattenTree();
+			if (k == 0) {
+				assertEquals(3, a.getNumChildren());
+			}
+			else {
+				assertEquals(2, a.getNumChildren());
+			}
+			a.reduceToBinary();
+			assertEquals(2, a.getNumChildren());
+		}
+	}
+	
 	@Override
 	public void setRootNode(AstNode node) {
 		root = node;

@@ -108,7 +108,7 @@ public class AstNode {
 		}
 	}
 	
-	void reduceToBinary() {
+	public void reduceToBinary() {
 		final int n = children.size();
 		if ((n > 2)  && ((type == NodeType.AST_PLUS) || (type == NodeType
 				.AST_TIMES))) {
@@ -135,6 +135,30 @@ public class AstNode {
 		Iterator<AstNode> it = children.iterator();
 		while (it.hasNext()) {
 			it.next().reduceToBinary();
+		}
+	}
+	
+	public void flattenTree() {
+		if ((type == NodeType.AST_PLUS) || (type == NodeType.AST_TIMES)) {
+			int k = 0;
+			while (k < children.size()) {
+				final AstNode child = children.get(k);
+				if (child.type == type) {
+					final int n_grandchildren = child.children.size();
+					for (int n = 0; n < n_grandchildren; n ++) {
+						children.add(child.children.get(n));
+					}
+					children.remove(k);
+				} else {
+					child.flattenTree();
+					k ++;
+				}
+			}
+		} else {
+			final int n_children = children.size();
+			for (int k = 0; k < n_children; k ++) {
+				children.get(k).flattenTree();
+			}
 		}
 	}
 }
