@@ -99,7 +99,7 @@ class DiffStateCoder extends StateVariable {
 						String st_var = st_coder.remove(0).getVarName();
 						code.append(st_var).append(" * ");
 					}
-					else if (stoichiometry != 1.0) {
+					else if (stoichiometry != 1) {
 						code.append(stoichiometry).append(" * ");
 					}
 					code.append(coder.getVarName()).append(' ');
