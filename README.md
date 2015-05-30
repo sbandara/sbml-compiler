@@ -35,6 +35,7 @@ The following features would be nice to have in the near future:
 * Support for different simulation clients in addition to packages that link FORTRAN code. We can do this
   by abstracting code generators from the entities in the dependency graph.
 * Add support for more recent SBML revisions up to Level 2 version 5.
+* Automatic differentiation of model equations, directly from the graph of dependencies and AST nodes.
 
 <h3>Acknowledgements</h3>
 This package was initially developed as part of a "Computational platform for modeling of signal transduction",
