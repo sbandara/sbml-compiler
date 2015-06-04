@@ -62,7 +62,7 @@ class AlgStateCoder extends StateVariable {
 	 * @param algeq right-hand side of the algebraic equation
 	 */
 	AlgStateCoder(AstNode algeq, SbmlCompiler compiler) {
-		super(compiler);
+		super(compiler, Problem.Role.ALG_STATE);
 		my_algeq = algeq;
 		findStateCandidates(my_algeq);
 	}
@@ -93,9 +93,5 @@ class AlgStateCoder extends StateVariable {
 
 	int getTarget() {
 		return SbmlCompiler.GFCN;
-	}
-
-	void registerToFunction(ArrayList<FortranFunction> code) {
-		code.get(SbmlCompiler.GFCN).outputs.add(this);
 	}
 }

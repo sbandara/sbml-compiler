@@ -18,37 +18,11 @@ package de.dkfz.tbi.sbmlcompiler;
  */
 abstract class StateVariable extends FortranCoder {
 	
-	StateVariable(SbmlCompiler compiler) {
-		super(compiler);
+	StateVariable(SbmlCompiler compiler, Problem.Role role) {
+		super(compiler, role);
 	}
-	
-	/**
-	 * Whether this <code>StateVariable</code> has implemented the reference
-	 * to its value in the FORTRAN function indicated by the array index.
-	 */
-	private boolean looped[];
-	
-	/**
-	 * Prepares visitor flags for the phase of code generation. This method
-	 * must be invoked explicitly by overriding methods. 
-	 */
+
 	void initialize(Bindings bindings) throws SbmlCompilerException {
-		looped = new boolean[compiler.getVisitFlagCount()];
-	}
-	
-	/**
-	 * Implements a reference to the current value of the state variable by
-	 * making {@link SbmlCompiler.StateVariable#putHeader} assign it to a
-	 * local FORTRAN variable. 
-	 * @param target target function
-	 * @param bindings dependency model of the experiment
-	 * @param visitor type of target function, must be either FFCN or GFCN
-	 */
-	void closeLoop(FortranFunction target, Bindings bindings, int visitor) {
-		if (! looped[visitor]) {
-			putHeader(target, bindings);
-		}
-		looped[visitor] = true;
 	}
 	
 	/**
@@ -58,7 +32,7 @@ abstract class StateVariable extends FortranCoder {
 	 * @param target target function
 	 * @param bindings dependency model of the experiment
 	 */
-	abstract void putHeader(FortranFunction target, Bindings bindings);
+	abstract void putHeader(TargetFunction target, Bindings bindings);
 	
 	/**
 	 * Returns whether this state variable is differential or algebraic.

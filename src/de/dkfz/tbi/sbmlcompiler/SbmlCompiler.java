@@ -19,7 +19,6 @@ package de.dkfz.tbi.sbmlcompiler;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -33,7 +32,7 @@ final public class SbmlCompiler {
 	public final static int FFCN = 0, GFCN = 1, PLOTFCN = 2, MFCN1 = 3;
 	public static final int WRAP_LINE = 72, DELAY_STEPS = 5;
     
-    private Bindings def_bindings = new Bindings();
+    private Bindings def_bindings = new Bindings(this);
     private Model model;
     
     private ArrayList<AlgStateCoder> readRules() throws SbmlCompilerException {
@@ -164,133 +163,4 @@ final public class SbmlCompiler {
     public Bindings getDefaultBindings() {
     	return def_bindings.clone();
     }
-    
-    /**
-     * Recursively visits the coders <code>parent</code> depends on, and makes
-     * theses put their FORTRAN code to the <code>target</code> function of type
-     * <code>visitor</code>. See external documentation for details on this
-     * algorithm.
-     * @param parent coder which has the children to be visited
-     * @param bindings dependency model of the experiment
-     * @param target target function where code is to be put
-     * @param visitor type of the target function
-     * @throws SbmlCompilerException
-     */
-    private void visitDependents(FortranCoder parent, Bindings bindings,
-    		FortranFunction target, int visitor) throws SbmlCompilerException {
-    	HashSet<String> dependents = parent.getCodeDependencies();
-    	parent.goodbye(visitor);
-    	for (Iterator<String> i = dependents.iterator(); i.hasNext();) {
-    		String name = i.next();
-    		FortranCoder coder = bindings.get(name);
-    		if (coder instanceof StateVariable) {
-    			StateVariable statevar = (StateVariable)coder;
-   				statevar.closeLoop(target, bindings, visitor);
-    		}
-    		else if (! coder.isVisited(visitor)) {
-	    		visitDependents(coder, bindings, target, visitor);
-	    		coder.putFortranCode(target, bindings);
-    		}
-    	}
-    }
-    
-    private int n_visit_flags = 0;
-    
-    int getVisitFlagCount() { return n_visit_flags; }
-    
-    /**
-     * Generates FORTRAN code from the dependency model of an experiment.
-     * @param bindings dependency model of the experiment
-     * @param labels names to be given to the generated FORTRAN functions: ffcn
-     * name, gfcn name, plotfcn name, names of the measurement functions ordered
-     * as in <code>measurements</code> 
-     * @param mfcns list of <code>EvalCoders</code> defining measurements
-     * @param plotVars receives the identifier strings of volatile model
-     * entities in the exact same order as written by the plot function
-     * @return array of code each for a single FORTRAN function, in this order:
-     * ffcn, gfcn, plot function, measurement functions in the order passed by
-     * the caller
-     * @throws SbmlCompilerException
-     */
-    public ArrayList<FortranFunction> compile(Bindings bindings, String prefix,
-    		HashSet<String> mfcns) throws SbmlCompilerException {
-    	ArrayList<FortranFunction> fn = new ArrayList<FortranFunction>();
-    	fn.add(FFCN, new FortranFunction(prefix + "ffcn", "f"));
-    	fn.add(GFCN, new FortranFunction(prefix + "gfcn", "g"));
-    	fn.add(PLOTFCN, new  FortranFunction(prefix + "plot",
-    			FortranFunction.PLOT));
-    	n_visit_flags = 3 + mfcns.size();
-    	for (Iterator<FortranCoder> k = bindings.getCoders().iterator();
-    			k.hasNext();) {
-    		k.next().registerToFunction(fn);
-    	}
-    	sequence = new HashMap<String, Integer>();
-		for (Iterator<String> i = mfcns.iterator(); i.hasNext();) {
-			String fn_name = i.next();
-			FortranCoder h_coder = bindings.get(fn_name);
-			h_coder.fastPrepare(bindings);
-			FortranFunction mfcn = new FortranFunction(prefix + fn_name,
-					h_coder.getVarName());
-			mfcn.outputs.add(h_coder);
-			fn.add(mfcn);
-		}
-		HashSet<FortranCoder> entry = new HashSet<FortranCoder>();
- 		for (int fn_id = 0; fn_id < fn.size(); fn_id ++) {
- 			FortranFunction target = fn.get(fn_id);	
- 			for (Iterator<FortranCoder> k = target.outputs.iterator();
- 					k.hasNext();) {
- 				FortranCoder coder = k.next();
- 				if (! coder.isInitialized()) {
- 					coder.init(bindings);
- 				}
- 				visitDependents(coder, bindings, target, fn_id);
- 				coder.putFortranCode(target, bindings);
- 				entry.add(coder);
- 			}
-		}
- 		for (Iterator<FortranCoder> k = entry.iterator(); k.hasNext();) {
- 			k.next().unprepare(bindings);
- 		}
- 		sequence = null;
-    	return fn;
-    }
-    
-    /**
-	 * Contains the prefixes as keys and <code>Integers</code> for counting
-	 * as values.
-	 */
-	private HashMap<String, Integer> sequence = new HashMap<String, Integer>();
-	
-	/**
-	 * Increments the counter for the given <code>prefix</code> if it
-	 * already exists, or creates one, otherwise.
-	 * @param prefix prefix of a FORTRAN variable name
-	 * @return unique number for each <code>prefix</code>, starting from one
-	 * and incremented by one.
-	 */
-	int makeId(String prefix) {
-		int id;
-		if (sequence.containsKey(prefix)) {
-			id = sequence.get(prefix) + 1;
-		}
-		else {
-			id = 1;
-		}
-		sequence.put(prefix, id);
-		return id;
-	}
-	
-	/**
-	 * Returns the greatest thus last number returned for <code>prefix
-	 * </code>. It is the number of variable names starting with <code>
-	 * prefix</code>.
-	 * @param prefix prefix of a FORTRAN variable name
-	 * @return number of variable names starting with <code>prefix</code>
-	 */
-	int getGreatestId(String prefix) {
-		if (sequence.containsKey(prefix)) {
-			return sequence.get(prefix);
-		}
-		return 0;
-	}
 }

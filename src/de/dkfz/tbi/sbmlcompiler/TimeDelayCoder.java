@@ -49,7 +49,7 @@ class TimeDelayCoder extends StateVariable {
 	 */
 	TimeDelayCoder(AstNode entity, AstNode delay, boolean onlyconc,
 			SbmlCompiler compiler) {
-		super(compiler);
+		super(compiler, Problem.Role.NONE);
 		my_entity = entity;
 		my_delay = delay;
 		onlyConc = onlyconc;

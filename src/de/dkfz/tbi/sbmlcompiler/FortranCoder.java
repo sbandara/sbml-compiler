@@ -26,9 +26,19 @@ public abstract class FortranCoder {
 	 */
 	final protected SbmlCompiler compiler;
 	
+	final private Problem.Role role;
+	
+	FortranCoder(SbmlCompiler compiler, Problem.Role role) {
+		this.compiler = compiler;
+		this.role = role;
+	}
+	
 	FortranCoder(SbmlCompiler compiler) {
 		this.compiler = compiler;
+		this.role = Problem.Role.NONE;
 	}
+	
+	public final Problem.Role getRole() { return role; }
 	
 	/**
 	 * Name of the FORTRAN variable that is used for storing the results of
@@ -42,7 +52,7 @@ public abstract class FortranCoder {
 	 * and incrementing, that is used for generating unique variable names.
 	 * <code>id</code> is unique for each prefix. 
 	 */
-	private int id;
+	private int id = -1;
 	
 	/**
 	 * Wether quantities of species that are expressed as amounts must be
@@ -111,21 +121,10 @@ public abstract class FortranCoder {
 	private int queueIndex;
 	
 	/**
-	 * Wether this <code>FortranCoder</code> has implemented its task in the
-	 * FORTRAN function indicated by the index.
-	 */
-	private boolean visited[];
-	
-	/**
-	 * Wether this <code>FortranCoder</code> has been initialized.
-	 */
-	private boolean initialized;
-
-	/**
 	 * Returns wether this <code>FortranCoder</code> has been initialized.
 	 * @return wether this <code>FortranCoder</code> has been initialized
 	 */
-	final boolean isInitialized() { return initialized; }
+	final boolean isInitialized() { return id > -1; }
 	
 	/**
 	 * Writes FORTRAN code to the {@link SbmlCompiler.FortranFunction}
@@ -139,7 +138,7 @@ public abstract class FortranCoder {
 	 * @param bindings dependency model of the experiment
 	 * @throws SbmlCompiler.SbmlCompilerException
 	 */
-	abstract void putFortranCode(FortranFunction target, Bindings bindings)
+	abstract void putFortranCode(TargetFunction target, Bindings bindings)
 			throws SbmlCompilerException;
 	
 	/**
@@ -162,13 +161,11 @@ public abstract class FortranCoder {
 	 */
 	final void init(Bindings bindings) throws SbmlCompilerException {
 		String prefix = getPrefix();
-		id = compiler.makeId(prefix);
+		id = 10; // compiler.makeId(prefix); // TODO: restore id generator
 		varName = prefix + id;
 		depends.clear();
 		callQueue.clear();
 		queueIndex = 0;
-		visited = new boolean[compiler.getVisitFlagCount()];
-		initialized = true;
 		initialize(bindings);
 		for (Iterator<String> k = depends.iterator(); k.hasNext();) {
 			String name = k.next();
@@ -453,37 +450,8 @@ public abstract class FortranCoder {
 	 */
 	public abstract SbmlBase getSbmlNode();
 	
-	/**
-	 * Returns whether this <code>FunctionCoder</code> has implemented its
-	 * task in the FORTRAN function indicated by <code>visitor</code>.
-	 * @param visitor context of the visitor, must be either <code>FFCN
-	 * </code> or <code>GFCN</code>.
-	 * @return whether the node has been visited already in this function
-	 * context
-	 */
-	final boolean isVisited(int visitor) { return visited[visitor]; }
-	
-	/**
-	 * Sets the flag indicating that this <code>FunctionCoder</code> has
-	 * implemented its task in the FORTRAN function named by <code>visitor
-	 * </code>.
-	 * @param visitor function context of the visitor, must be either <code>
-	 * FFCN</code> or <code>GFCN</code>. 
-	 */
-	final void goodbye(int visitor) {
-		visited[visitor] = true;
-	}
-	
-	/**
-	 * Walks the dependency model for marking each coder uninitialized.
-	 * Importantly, the {@link SbmlCompiler.FortranCoder#visited} flags are
-	 * set to false. Must not be overridden by other classes than <code>
-	 * ModelStateFcn</code>.
-	 * @param bindings dependency model of this experiment
-	 * @throws SbmlCompilerException
-	 */
 	void unprepare(Bindings bindings) throws SbmlCompilerException {
-		initialized = false;
+		id = -1;
 		for (Iterator<String> k = depends.iterator(); k.hasNext();) {
 			FortranCoder coder = bindings.get(k.next());
 			if (coder.isInitialized()) {
@@ -491,8 +459,6 @@ public abstract class FortranCoder {
 			}
 		}
 	}
-	
-	void registerToFunction(ArrayList<FortranFunction> code) { };
 	
 	String fastPrepare(Bindings bindings) throws SbmlCompilerException {
 		if (! isInitialized()) {

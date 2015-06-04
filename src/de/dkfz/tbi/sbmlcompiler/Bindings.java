@@ -7,13 +7,16 @@ import java.util.Set;
 public class Bindings implements Cloneable {
 	
 	private final HashMap<String, FortranCoder> bindings;
+	final SbmlCompiler compiler;
+	boolean did_compile = false;
 	
-	private Bindings(HashMap<String, FortranCoder> clone) {
+	private Bindings(SbmlCompiler compiler, HashMap<String, FortranCoder> clone) {
+		this.compiler = compiler;
 		bindings = clone;
 	}
 	
-	Bindings() {
-		bindings = new HashMap<String, FortranCoder>();
+	Bindings(SbmlCompiler compiler) {
+		this(compiler, new HashMap<String, FortranCoder>());
 	}
 	
 	public FortranCoder get(String id) {
@@ -28,10 +31,17 @@ public class Bindings implements Cloneable {
 		bindings.put(id, coder);
 	}
 	
+	void assertNotCompiled() {
+		if (did_compile) {
+			throw new IllegalStateException("Bindings already compiled.");
+		}
+	}
+	
 	public Bindings clone() {
- 		HashMap<String, FortranCoder> clone = new HashMap<String,
+		assertNotCompiled();
+		HashMap<String, FortranCoder> clone = new HashMap<String,
  				FortranCoder>();
  		clone.putAll(bindings);
- 		return new Bindings(clone);
+ 		return new Bindings(compiler, clone);
 	}
 }

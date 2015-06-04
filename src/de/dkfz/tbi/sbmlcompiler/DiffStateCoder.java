@@ -43,7 +43,7 @@ class DiffStateCoder extends StateVariable {
 	 * involved in as a reactant or product
 	 */
 	DiffStateCoder(SbmlBase obj, String[] reactions, SbmlCompiler compiler) {
-		super(compiler);
+		super(compiler, Problem.Role.DIFF_STATE);
 		ref_obj = obj;
 		this.reactions = reactions;
 		st_coder = new ArrayList<EvalCoder>();
@@ -54,7 +54,7 @@ class DiffStateCoder extends StateVariable {
 	 * @param diffeq abstract syntax tree of the rate rule
 	 */
 	DiffStateCoder(SbmlBase obj, AstNode diffeq, SbmlCompiler compiler) {
-		super(compiler);
+		super(compiler, Problem.Role.DIFF_STATE);
 		ref_obj = obj;
 		this.diffeq = diffeq;
 		st_coder = null;
@@ -176,8 +176,4 @@ class DiffStateCoder extends StateVariable {
 	String getPrefix() { return "xd"; }
 	
 	int getTarget() { return SbmlCompiler.FFCN; }
-	
-	void registerToFunction(ArrayList<FortranFunction> code) {
-		code.get(SbmlCompiler.FFCN).outputs.add(this);
-	}
 }
